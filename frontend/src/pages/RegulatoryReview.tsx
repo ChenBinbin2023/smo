@@ -673,7 +673,7 @@ const RegulatoryReview: React.FC = () => {
                             <div className="bg-gray-50 p-2 rounded">
                                 <div className="flex justify-between items-center mb-1">
                                     <span className="text-xs text-gray-600">预计修订周期</span>
-                                    <Text strong className="text-sm">1.5 周</Text>
+                                    <Text strong className="text-sm">11 天</Text>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs text-gray-600">预估内部成本</span>
