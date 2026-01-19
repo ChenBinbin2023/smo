@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, Row, Col, Input, Button, List, Avatar, Typography, Space, Tag, Badge, Empty, Table, Divider, Statistic, Progress, Drawer } from 'antd'
 import {
     RobotOutlined, UserOutlined, SendOutlined, CheckCircleFilled,
     LoadingOutlined, BookOutlined, DeploymentUnitOutlined,
     SearchOutlined, MedicineBoxOutlined, TeamOutlined, BarChartOutlined,
     ShareAltOutlined, AimOutlined, FilterOutlined, PieChartOutlined,
-    BulbOutlined, ExperimentOutlined
+    BulbOutlined, ExperimentOutlined, FileTextOutlined, EyeOutlined
 } from '@ant-design/icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
@@ -30,8 +30,15 @@ interface Scenario {
     renderResult: () => React.ReactNode;
 }
 
+interface Message {
+    role: 'user' | 'assistant';
+    content: string;
+    reportId?: string;
+    reportTitle?: string;
+}
+
 const IntelligentQuery: React.FC = () => {
-    const [messages, setMessages] = useState([
+    const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: '您好！我是集成本体认知的智能助理。请输入您的查询需求，我将通过知识图谱与本体架构为您精准规划和检索。' }
     ])
     const [inputValue, setInputValue] = useState('')
@@ -42,6 +49,13 @@ const IntelligentQuery: React.FC = () => {
     const [stepIndex, setStepIndex] = useState(-1)
     const [isDrawerVisible, setIsDrawerVisible] = useState(false)
     const [selectedPI, setSelectedPI] = useState<any>(null)
+    const [viewingReportId, setViewingReportId] = useState<string | null>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Auto-scroll to bottom when messages change
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages])
 
     const fullThinkingText = "正在深度解析您的语义意图，并基于 SMO 本体架构检索跨维度的相关节点与关联路径。系统正在构建一套最优的推理规划链条：首先调取领域知识图谱锁定核心实体，随后通过多模态算子评估入组速率与合规性权重，正动态分配特征计算资源，以确保检索结果的精准度与可落地性……"
 
@@ -627,7 +641,7 @@ const IntelligentQuery: React.FC = () => {
 
     const handleSend = (text: string = inputValue) => {
         if (!text) return
-        const newMsgs = [...messages, { role: 'user', content: text }]
+        const newMsgs: Message[] = [...messages, { role: 'user' as const, content: text }]
         setMessages(newMsgs)
         setInputValue('')
 
@@ -650,7 +664,7 @@ const IntelligentQuery: React.FC = () => {
             if (displayedThinkingText.length < fullThinkingText.length) {
                 const timer = setTimeout(() => {
                     setDisplayedThinkingText(fullThinkingText.slice(0, displayedThinkingText.length + 1))
-                }, 30)
+                }, 15)
                 return () => clearTimeout(timer)
             } else {
                 // Thinking finished, wait a bit then start processing
@@ -671,7 +685,7 @@ const IntelligentQuery: React.FC = () => {
 
     useEffect(() => {
         if (isProcessing && currentScenario && stepIndex < currentScenario.planningSteps.length) {
-            const randomDelay = Math.random() * 2000 + 1000 // 1-3 seconds
+            const randomDelay = Math.random() * 1500 + 500 // 0.5-2 seconds
             const timer = setTimeout(() => {
                 const nextSteps = [...currentScenario.planningSteps]
                 if (stepIndex > 0) {
@@ -685,14 +699,20 @@ const IntelligentQuery: React.FC = () => {
             }, randomDelay)
             return () => clearTimeout(timer)
         } else if (isProcessing && currentScenario && stepIndex === currentScenario.planningSteps.length) {
-            const randomDelay = Math.random() * 2000 + 1000 // 1-3 seconds
+            const randomDelay = Math.random() * 1500 + 500 // 0.5-2 seconds
             const timer = setTimeout(() => {
                 const finalSteps = [...currentScenario.planningSteps]
                 finalSteps[finalSteps.length - 1].status = 'done'
                 finalSteps[finalSteps.length - 1].duration = `+${(randomDelay / 1000).toFixed(1)}s`
-                setCurrentScenario({ ...currentScenario, planningSteps: finalSteps })
+                const completedScenario = { ...currentScenario, planningSteps: finalSteps }
+                setCurrentScenario(completedScenario)
                 setIsProcessing(false)
-                setMessages(prev => [...prev, { role: 'assistant', content: '查询规划已通过本体引擎执行完毕。右侧已根据检索结果为您设计了专门的展示看板。' }])
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: '查询规划已通过本体引擎执行完毕。已根据检索结果为您生成专属报告：',
+                    reportId: completedScenario.id,
+                    reportTitle: completedScenario.reportTitle
+                }])
             }, randomDelay)
             return () => clearTimeout(timer)
         }
@@ -718,12 +738,41 @@ const IntelligentQuery: React.FC = () => {
                                             className={msg.role === 'user' ? 'bg-blue-500 ml-2' : 'bg-green-500 mr-2'}
                                             size="small"
                                         />
-                                        <div className={`p-3 rounded-lg text-sm ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                        <div className={`p-3 rounded-lg text-sm overflow-hidden ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
                                             <Text style={{ color: msg.role === 'user' ? 'white' : 'inherit' }}>{msg.content}</Text>
+                                            {msg.reportId && msg.reportTitle && (
+                                                <div className="mt-2 pt-2 border-t border-gray-200 overflow-hidden">
+                                                    <Button
+                                                        type="link"
+                                                        size="small"
+                                                        className="p-0 h-auto text-blue-600 hover:text-blue-800 w-full"
+                                                        onClick={() => {
+                                                            // Find the matched scenario and set it as current
+                                                            const targetScenario = scenarios.find(s => s.id === msg.reportId)
+                                                            if (targetScenario) {
+                                                                setCurrentScenario({
+                                                                    ...targetScenario,
+                                                                    planningSteps: targetScenario.planningSteps.map(s => ({ ...s, status: 'done' as const }))
+                                                                })
+                                                                setStepIndex(targetScenario.planningSteps.length)
+                                                                setIsProcessing(false)
+                                                                setIsThinking(false)
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-1 w-full overflow-hidden">
+                                                            <FileTextOutlined className="flex-shrink-0" />
+                                                            <span className="truncate flex-1 min-w-0 text-left" title={msg.reportTitle}>《{msg.reportTitle}》</span>
+                                                            <EyeOutlined className="flex-shrink-0" />
+                                                        </div>
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
                         <div className="mt-auto pt-4 border-t border-gray-100">
                             <div className="flex space-x-2">

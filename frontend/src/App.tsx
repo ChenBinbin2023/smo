@@ -11,11 +11,13 @@ import {
     MessageOutlined,
     ContainerOutlined,
     AppstoreOutlined,
-    BulbOutlined
+    BulbOutlined,
+    AuditOutlined
 } from '@ant-design/icons'
 import Home from './pages/Home'
 import IntelligentSelection from './pages/IntelligentSelection'
 import IntelligentQuery from './pages/IntelligentQuery'
+import RegulatoryReview from './pages/RegulatoryReview'
 import DataCenter from './pages/DataCenter'
 import AnalysisCenter from './pages/AnalysisCenter'
 
@@ -31,6 +33,7 @@ const App = () => {
         { key: 'home', icon: <CompassOutlined />, label: '工作台' },
         { key: 'selection', icon: <SearchOutlined />, label: '中心选择' },
         { key: 'query', icon: <BulbOutlined />, label: '智能查询' },
+        { key: 'regulation', icon: <AuditOutlined />, label: '法规审查' },
         { key: 'data', icon: <ContainerOutlined />, label: '数据中心' },
         { key: 'analysis', icon: <BarChartOutlined />, label: '分析中心' },
         { key: 'history', icon: <HistoryOutlined />, label: '历史选址' },
@@ -42,6 +45,7 @@ const App = () => {
             case 'home': return <Home />
             case 'selection': return <IntelligentSelection />
             case 'query': return <IntelligentQuery />
+            case 'regulation': return <RegulatoryReview />
             case 'data': return <DataCenter />
             case 'analysis': return <AnalysisCenter />
             default: return <Home />
