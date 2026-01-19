@@ -751,7 +751,7 @@ const RegulatoryReview: React.FC = () => {
                         <Tabs defaultActiveKey="projects" items={[
                             {
                                 key: 'projects',
-                                label: <span><ProjectOutlined /> 受影响项目 ({mockMatchedProjects.length})</span>,
+                                label: <span><ProjectOutlined /> 可能受影响的项目 ({mockMatchedProjects.length})</span>,
                                 children: (
                                     <div className="space-y-2">
                                         <div className="flex justify-end">
@@ -773,7 +773,7 @@ const RegulatoryReview: React.FC = () => {
                             },
                             {
                                 key: 'proposals',
-                                label: <span><SolutionOutlined /> 受影响方案 ({mockMatchedProposals.length})</span>,
+                                label: <span><SolutionOutlined /> 可能受影响的方案 ({mockMatchedProposals.length})</span>,
                                 children: (
                                     <div className="space-y-2">
                                         <div className="flex justify-end">
