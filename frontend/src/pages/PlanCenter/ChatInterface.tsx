@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { Card, Input, Button, Avatar, Typography, Mentions, Modal, List, Tag } from 'antd'
-import { RobotOutlined, UserOutlined, SendOutlined, FileTextOutlined, ScheduleOutlined, DatabaseOutlined, SolutionOutlined, AuditOutlined, SafetyCertificateOutlined, AimOutlined, ExperimentOutlined, BarChartOutlined } from '@ant-design/icons'
-import { Message, RFPProposal } from './types'
+import { RobotOutlined, UserOutlined, SendOutlined, FileTextOutlined, ScheduleOutlined, DatabaseOutlined, SolutionOutlined, AuditOutlined, SafetyCertificateOutlined, AimOutlined, ExperimentOutlined, BarChartOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Message, RFPProposal, ProposalOption } from './types'
 import { expertRoles, systemCommands, rfpProposals } from './mockData'
 import TodoList from './TodoList'
 import { useTypewriter } from './useTypewriter'
@@ -46,6 +46,8 @@ interface ChatInterfaceProps {
     onTimelineCompression?: () => void;
     showGeneticApprovalAction?: boolean;
     onGeneticApproval?: () => void;
+    onSelectProposal?: (proposal: ProposalOption) => void;
+    proposalSelected?: boolean;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -61,15 +63,56 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     showTimelineCompressionAction = false,
     onTimelineCompression,
     showGeneticApprovalAction = false,
-    onGeneticApproval
+    onGeneticApproval,
+    onSelectProposal,
+    proposalSelected = false
 }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [showRFPModal, setShowRFPModal] = useState(false)
+    const [showProposalModal, setShowProposalModal] = useState(false)
+    const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null)
     const [currentPrefix, setCurrentPrefix] = useState<'@' | '/' | null>(null)
+    const hasAutoOpenedProposalModal = useRef(false)
+
+    // 获取当前的方案选项（从最新的包含 proposalOptions 的消息中）
+    const currentProposalOptions = messages
+        .slice()
+        .reverse()
+        .find(msg => msg.proposalOptions && msg.proposalOptions.length > 0)?.proposalOptions
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
+    // 自动弹出方案选择 Modal
+    useEffect(() => {
+        if (currentProposalOptions && currentProposalOptions.length > 0 && !proposalSelected && !hasAutoOpenedProposalModal.current) {
+            hasAutoOpenedProposalModal.current = true
+            // 延迟一点弹出，让消息先显示
+            const timer = setTimeout(() => {
+                setShowProposalModal(true)
+            }, 500)
+            return () => clearTimeout(timer)
+        }
+    }, [currentProposalOptions, proposalSelected])
+
+    // 重置自动弹出标记
+    useEffect(() => {
+        if (proposalSelected) {
+            hasAutoOpenedProposalModal.current = false
+        }
+    }, [proposalSelected])
+
+    const handleProposalConfirm = () => {
+        if (selectedProposalId && currentProposalOptions && onSelectProposal) {
+            const selected = currentProposalOptions.find(p => p.id === selectedProposalId)
+            if (selected) {
+                onSelectProposal(selected)
+                setShowProposalModal(false)
+                setSelectedProposalId(null)
+            }
+        }
+    }
 
     const handleInputChange = (value: string) => {
         onInputChange(value)
@@ -161,6 +204,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                             <MessageBubble
                                                 message={msg}
                                                 onTypingUpdate={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                                onShowProposalModal={() => setShowProposalModal(true)}
+                                                proposalSelected={proposalSelected}
                                             />
                                         </div>
                                     </div>
@@ -261,6 +306,84 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         </List.Item>
                     )}
                 />
+            </Modal>
+
+            {/* 方案选择 Modal */}
+            <Modal
+                title="专家意见分歧 - 请选择要采纳的方案"
+                open={showProposalModal}
+                onCancel={() => setShowProposalModal(false)}
+                width={700}
+                footer={[
+                    <Button key="cancel" onClick={() => setShowProposalModal(false)}>
+                        取消
+                    </Button>,
+                    <Button
+                        key="confirm"
+                        type="primary"
+                        disabled={!selectedProposalId}
+                        onClick={handleProposalConfirm}
+                    >
+                        采纳选中方案
+                    </Button>
+                ]}
+            >
+                {currentProposalOptions && (
+                    <div className="space-y-4">
+                        <div className="text-gray-600 mb-4">
+                            各位专家意见分歧较大，请选择一个方案继续推进：
+                        </div>
+                        {currentProposalOptions.map(proposal => (
+                            <div
+                                key={proposal.id}
+                                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                                    selectedProposalId === proposal.id
+                                        ? 'border-blue-400 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => setSelectedProposalId(proposal.id)}
+                            >
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        checked={selectedProposalId === proposal.id}
+                                        onChange={() => setSelectedProposalId(proposal.id)}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Tag icon={<UserOutlined />} color="blue">{proposal.expert}</Tag>
+                                            <Text strong className="text-base">{proposal.title}</Text>
+                                        </div>
+                                        <Text className="text-gray-600 block mb-3">{proposal.description}</Text>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-green-50 rounded-lg p-3">
+                                                <div className="text-green-700 font-medium mb-2 flex items-center gap-1">
+                                                    <CheckCircleOutlined /> 优点
+                                                </div>
+                                                <ul className="list-disc list-inside text-green-600 text-sm space-y-1">
+                                                    {proposal.pros.map((pro, i) => (
+                                                        <li key={i}>{pro}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="bg-red-50 rounded-lg p-3">
+                                                <div className="text-red-700 font-medium mb-2 flex items-center gap-1">
+                                                    <CloseCircleOutlined /> 缺点
+                                                </div>
+                                                <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
+                                                    {proposal.cons.map((con, i) => (
+                                                        <li key={i}>{con}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </Modal>
         </>
     )

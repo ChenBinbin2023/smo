@@ -22,12 +22,22 @@ export interface PlanItem {
     status: 'draft' | 'in-progress' | 'completed';
 }
 
+export interface ProposalOption {
+    id: string;
+    expert: string;           // 提出方案的专家
+    title: string;            // 方案标题
+    description: string;      // 方案简述
+    pros: string[];           // 优点列表
+    cons: string[];           // 缺点列表
+}
+
 export interface Message {
     role: 'user' | 'assistant';
     content: string;
     agentName?: string; // Optional agent name, defaults to "系统"
     typing?: boolean; // Whether to show typing animation
     todoList?: { text: string; completed: boolean }[]; // If present, show as todo list
+    proposalOptions?: ProposalOption[]; // If present, show proposal selection UI
 }
 
 export interface ExpertRole {

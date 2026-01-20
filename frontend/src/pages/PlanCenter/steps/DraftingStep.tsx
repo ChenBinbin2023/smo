@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Typography, Tag, Card, Tabs, List, Tooltip, Badge, Row, Col, Collapse, Button, Divider, Alert, Table, Spin } from 'antd'
 import {
     SyncOutlined,
@@ -26,6 +26,14 @@ interface DraftingStepProps {
 
 const DraftingStep: React.FC<DraftingStepProps> = ({ geneticApprovalCompleted = false, isRevising = false }) => {
     const [activeTab, setActiveTab] = useState('protocol')
+    const topRef = useRef<HTMLDivElement>(null)
+
+    // 当进入修订状态时，自动滚动到顶部
+    useEffect(() => {
+        if (isRevising && topRef.current) {
+            topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+    }, [isRevising])
 
     // Mock Protocol Data - Gastric Cancer Study
     const protocolContent = (
@@ -113,9 +121,7 @@ const DraftingStep: React.FC<DraftingStepProps> = ({ geneticApprovalCompleted = 
                         <li>根据RECIST v1.1标准，至少有一个可测量病灶。</li>
                         <li>ECOG体能状态评分 0 或 1。</li>
                         <li>
-                            <Tooltip title="基于风控报告优化了血液学及肝肾功能指标，降低筛选失败率。">
-                                <span className="bg-yellow-100 cursor-help p-1 rounded">器官功能良好：ANC ≥ 1.5×10^9/L, PLT ≥ 100×10^9/L, Hb ≥ 90 g/L; TBIL ≤ 1.5×ULN, ALT/AST ≤ 2.5×ULN (肝转移者 ≤ 5×ULN); CrCl ≥ 50 mL/min。</span>
-                            </Tooltip>
+                            器官功能良好：ANC ≥ 1.5×10^9/L, PLT ≥ 100×10^9/L, Hb ≥ 90 g/L; TBIL ≤ 1.5×ULN, ALT/AST ≤ 2.5×ULN (肝转移者 ≤ 5×ULN); CrCl ≥ 50 mL/min。
                         </li>
                     </ol>
                 </div>
@@ -234,6 +240,29 @@ const DraftingStep: React.FC<DraftingStepProps> = ({ geneticApprovalCompleted = 
                         { title: 'ADA采样', dataIndex: 'ada', key: 'ada', align: 'center' },
                     ]}
                 />
+                {/* 遗传资源审批说明 - 动态添加 */}
+                {geneticApprovalCompleted && (
+                    <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded">
+                        <Title level={5} className="text-green-700">13.1 人类遗传资源管理</Title>
+                        <Paragraph>
+                            本研究涉及人类遗传资源的采集与使用，将严格遵守《中华人民共和国人类遗传资源管理条例》的相关规定。
+                        </Paragraph>
+                        <div className="pl-4">
+                            <Title level={5}>13.1.1 遗传资源采集审批</Title>
+                            <Paragraph>
+                                研究开始前，申办方已向科技部中国人类遗传资源管理办公室提交人类遗传资源采集审批申请，获得批准后方可开展涉及遗传资源的研究活动。采集范围包括用于探索性生物标志物分析的血液样本。
+                            </Paragraph>
+                            <Title level={5}>13.1.2 样本出境审批</Title>
+                            <Paragraph>
+                                如需将人类遗传资源材料或相关数据出境，申办方将按照规定向人类遗传资源管理办公室申请出境许可。出境前需完成数据安全评估，确保符合《数据安全法》和《个人信息保护法》的要求。
+                            </Paragraph>
+                            <Title level={5}>13.1.3 知情同意要求</Title>
+                            <Paragraph>
+                                知情同意书中已包含遗传资源使用的专门条款，明确告知受试者：(1) 样本将用于的具体研究目的；(2) 样本可能出境的情况及安全保障措施；(3) 受试者有权拒绝样本用于遗传资源研究而不影响其参与主研究。
+                            </Paragraph>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mb-6">
@@ -322,13 +351,15 @@ const DraftingStep: React.FC<DraftingStepProps> = ({ geneticApprovalCompleted = 
 
     return (
         <Card bordered={false} className="shadow-sm min-h-full flex flex-col" styles={{ body: { padding: '0', display: 'flex', flexDirection: 'column', flex: 1 } }}>
+            {/* 顶部锚点，用于自动滚动 */}
+            <div ref={topRef} />
             {/* 修订中提示 */}
             {isRevising && (
                 <div className="bg-orange-50 border-b border-orange-200 px-4 py-3 flex items-center gap-3">
                     <Spin indicator={<LoadingOutlined style={{ fontSize: 18 }} spin />} />
                     <div>
                         <Text strong className="text-orange-700"><EditOutlined /> 方案修订中</Text>
-                        <Text className="text-orange-600 ml-2">医学方案撰写专家正在补充入组策略优化内容...</Text>
+                        <Text className="text-orange-600 ml-2">医学方案撰写专家正在更新方案内容...</Text>
                     </div>
                 </div>
             )}

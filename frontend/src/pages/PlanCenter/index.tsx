@@ -4,7 +4,7 @@ import ChatInterface from './ChatInterface'
 import PlanList from './PlanList'
 import WorkflowView from './WorkflowView'
 import { mockPlans, stepsData } from './mockData'
-import { Message } from './types'
+import { Message, ProposalOption } from './types'
 
 const PlanCenter: React.FC = () => {
     const [viewMode, setViewMode] = useState<'list' | 'workflow'>('list')
@@ -26,7 +26,41 @@ const PlanCenter: React.FC = () => {
     const [hasCompressedTimeline, setHasCompressedTimeline] = useState(false)
     const [geneticApprovalCompleted, setGeneticApprovalCompleted] = useState(false)
     const [isRevising, setIsRevising] = useState(false)
+    const [proposalSelected, setProposalSelected] = useState(false)
+    const [selectedProposal, setSelectedProposal] = useState<ProposalOption | null>(null)
     const workflowTimerRef = useRef<NodeJS.Timeout[]>([])
+
+    // 专家方案选项
+    const expertProposals: ProposalOption[] = [
+        {
+            id: 'bd-proposal',
+            expert: 'BD',
+            title: '增加中心数量',
+            description: '将中心数量从 50 家增加至 60 家，预计入组周期压缩至 20 个月',
+            pros: [
+                '入组周期最短（20个月）',
+                '竞品已进入临床阶段，缩短周期能大幅提升竞标优势'
+            ],
+            cons: [
+                '需重新评估 GCP 合规能力',
+                '中心管理复杂度增加，质控成本增加15%'
+            ]
+        },
+        {
+            id: 'clinical-proposal',
+            expert: '临床专家',
+            title: '优化入组策略',
+            description: '缩短筛选期 + Tier1 中心激励奖金 + 备选中心机制，预计周期 22 个月',
+            pros: [
+                '质控成本不增加',
+                '现有中心质量有保障',
+                '无需额外合规审批'
+            ],
+            cons: [
+                '激励奖金需额外预算'
+            ]
+        }
+    ]
 
     // Cleanup timers on unmount
     useEffect(() => {
@@ -794,6 +828,7 @@ const PlanCenter: React.FC = () => {
                 typing: true
             })
             setSiteSelectionSubStatus('center-done') // Mark center done
+            setHasCompressedTimeline(true) // 中心选择完成后立即更新数据
         }, currentDelay + 1000)
         timers.push(centerDoneTimer)
 
@@ -867,7 +902,6 @@ const PlanCenter: React.FC = () => {
                 typing: true
             })
             setSiteSelectionSubStatus('completed')
-            setHasCompressedTimeline(true) // Enable compressed view
         }, finalDelay + 1000)
         timers.push(finalTimer)
 
@@ -1058,51 +1092,76 @@ const PlanCenter: React.FC = () => {
         }, complianceDelay)
         timers.push(timer7)
 
-        // 6. 项目经理协调 - 决定回退修改方案
+        // 6. 项目经理协调 - 展示方案选择，等待用户决策
         const pmMediateDelay = complianceDelay + 2000
         const timer8 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '各位专家意见分歧较大。综合考虑后，建议采用临床专家的优化策略方案。\n\n@医学方案撰写专家 请回到方案撰写阶段，补充入组策略优化内容。',
-                agentName: '项目经理'
+                content: '各位专家意见分歧较大，请选择要采纳的方案：',
+                agentName: '项目经理',
+                proposalOptions: expertProposals
             })
-            // 回退到方案撰写步骤，并设置修订状态
-            setActiveStep(5)
-            setStepStatus('completed')
-            setIsRevising(true)
+            // 暂停流程，等待用户选择
         }, pmMediateDelay)
         timers.push(timer8)
 
-        // ==================== 方案修订阶段 ====================
-        const revisionStartDelay = pmMediateDelay + 2000
-        const timer9 = setTimeout(() => {
+        workflowTimerRef.current = [...workflowTimerRef.current, ...timers]
+    }
+
+    // 用户选择方案后执行的修订流程
+    const executeProposalRevision = (proposal: ProposalOption) => {
+        const timers: NodeJS.Timeout[] = []
+
+        // 根据选择的方案生成不同的修订内容
+        const isBDProposal = proposal.id === 'bd-proposal'
+
+        const revisionTodos = isBDProposal
+            ? [
+                { text: '更新中心数量：50家→60家', completed: false },
+                { text: '重新评估 GCP 合规能力', completed: false },
+                { text: '更新伦理审查时间线', completed: false },
+                { text: '更新入组周期预测：24个月→20个月', completed: false }
+            ]
+            : [
+                { text: '缩短筛选期：28天→21天', completed: false },
+                { text: '增加Tier 1中心激励奖金条款', completed: false },
+                { text: '补充2家备选中心应急机制', completed: false },
+                { text: '更新入组周期预测：24个月→22个月', completed: false }
+            ]
+
+        const revisionDescription = isBDProposal
+            ? '补充中心扩展方案'
+            : '补充入组策略优化内容'
+
+        const finalCycle = isBDProposal ? '20' : '22'
+
+        // 回退到方案撰写步骤
+        setActiveStep(5)
+        setStepStatus('completed')
+        setIsRevising(true)
+
+        // 开始修订
+        const timer1 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '收到。正在修订方案，补充入组策略优化内容...',
+                content: `收到。正在修订方案，${revisionDescription}...`,
                 agentName: '医学方案撰写专家',
                 typing: true
             })
-        }, revisionStartDelay)
-        timers.push(timer9)
+        }, 500)
+        timers.push(timer1)
 
-        const revisionTodos = [
-            { text: '缩短筛选期：28天→21天', completed: false },
-            { text: '增加Tier 1中心激励奖金条款', completed: false },
-            { text: '补充2家备选中心应急机制', completed: false },
-            { text: '更新入组周期预测：24个月→21个月', completed: false }
-        ]
-
-        const timer10 = setTimeout(() => {
+        const timer2 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '正在修订入组策略',
+                content: '正在修订方案',
                 agentName: '医学方案撰写专家',
                 todoList: revisionTodos
             })
-        }, revisionStartDelay + 1000)
-        timers.push(timer10)
+        }, 1500)
+        timers.push(timer2)
 
-        let revisionDelay = revisionStartDelay + 1500
+        let revisionDelay = 2000
         revisionTodos.forEach((_, index) => {
             revisionDelay += 800
             const timer = setTimeout(() => {
@@ -1119,19 +1178,19 @@ const PlanCenter: React.FC = () => {
             timers.push(timer)
         })
 
-        const timer11 = setTimeout(() => {
+        const timer3 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '✅ 方案修订完成。已在第3节（研究设计）和第6节（访视与评估）补充入组策略优化内容。请重新进入评审。',
+                content: `✅ 方案修订完成。已在第3节（研究设计）和第6节（访视与评估）${revisionDescription}。请重新进入评审。`,
                 agentName: '医学方案撰写专家'
             })
             setIsRevising(false)
         }, revisionDelay + 1000)
-        timers.push(timer11)
+        timers.push(timer3)
 
         // ==================== 第二轮评审 ====================
         const reReviewDelay = revisionDelay + 2500
-        const timer12 = setTimeout(() => {
+        const timer4 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
                 content: '方案已修订完成。@临床专家 @合规专家 @BD 请进行二次评审确认。',
@@ -1141,44 +1200,50 @@ const PlanCenter: React.FC = () => {
             setActiveStep(6)
             setStepStatus('loading')
         }, reReviewDelay)
-        timers.push(timer12)
+        timers.push(timer4)
 
         // 临床专家确认
         const clinicalConfirmDelay = reReviewDelay + 1500
-        const timer13 = setTimeout(() => {
+        const timer5 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '✅ 二次审查通过。入组策略优化方案符合预期，可有效压缩周期同时保障数据质量。',
+                content: isBDProposal
+                    ? `✅ 二次审查通过。虽然增加中心会导致入组量稀释、质控成本增加15%，但并非严重问题且用户已做出选择。`
+                    : `✅ 二次审查通过。入组策略优化方案符合预期，可有效压缩周期同时保障数据质量。`,
                 agentName: '临床专家'
             })
         }, clinicalConfirmDelay)
-        timers.push(timer13)
+        timers.push(timer5)
 
         // BD确认
         const bdConfirmDelay = clinicalConfirmDelay + 1500
-        const timer14 = setTimeout(() => {
+        const timer6 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '✅ 商务评估通过。21个月周期可接受，激励奖金预算在现有范围内可调配。',
+                content: isBDProposal
+                    ? `✅ 商务评估通过。${finalCycle}个月周期竞争力强，中心管理成本在可控范围。`
+                    : `✅ 商务评估通过。虽然${finalCycle}个月周期比预期略长，但激励奖金方案可行，用户已做出选择。`,
                 agentName: 'BD'
             })
         }, bdConfirmDelay)
-        timers.push(timer14)
+        timers.push(timer6)
 
         // 合规专家确认
         const complianceConfirmDelay = bdConfirmDelay + 1500
-        const timer15 = setTimeout(() => {
+        const timer7 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
-                content: '✅ 合规审查通过。修订内容符合ICH-GCP及国内监管要求，无额外合规风险。',
+                content: isBDProposal
+                    ? '✅ 合规审查通过。新增中心的 GCP 合规评估已纳入，伦理审查时间线已更新。'
+                    : '✅ 合规审查通过。修订内容符合ICH-GCP及国内监管要求，无额外合规风险。',
                 agentName: '合规专家'
             })
         }, complianceConfirmDelay)
-        timers.push(timer15)
+        timers.push(timer7)
 
         // PM 总结
         const finishDelay = complianceConfirmDelay + 2000
-        const timer16 = setTimeout(() => {
+        const timer8 = setTimeout(() => {
             addMessage({
                 role: 'assistant',
                 content: '✅ 二次评审全票通过！方案已定稿，评审报告已生成，详情见右侧 →',
@@ -1187,9 +1252,27 @@ const PlanCenter: React.FC = () => {
             })
             setStepStatus('completed')
         }, finishDelay)
-        timers.push(timer16)
+        timers.push(timer8)
 
         workflowTimerRef.current = [...workflowTimerRef.current, ...timers]
+    }
+
+    // 处理用户选择方案
+    const handleProposalSelect = (proposal: ProposalOption) => {
+        setProposalSelected(true)
+        setSelectedProposal(proposal)
+
+        // 添加一条消息记录用户的选择
+        addMessage({
+            role: 'assistant',
+            content: `已采纳 ${proposal.expert} 的方案「${proposal.title}」\n\n@医学方案撰写专家 请回到方案撰写阶段进行修订。`,
+            agentName: '项目经理'
+        })
+
+        // 延迟执行修订流程
+        setTimeout(() => {
+            executeProposalRevision(proposal)
+        }, 1000)
     }
 
     const executeDelivery = () => {
@@ -1384,6 +1467,7 @@ const PlanCenter: React.FC = () => {
                 typing: true
             })
             setSiteSelectionSubStatus('center-done')
+            setHasAddedRegion(true) // 中心选择完成后立即更新数据
         }, currentDelay + 1000)
         timers.push(centerDoneTimer)
 
@@ -1457,7 +1541,6 @@ const PlanCenter: React.FC = () => {
                 typing: true
             })
             setSiteSelectionSubStatus('completed')
-            setHasAddedRegion(true)
         }, finalDelay + 1000)
         timers.push(finalTimer)
 
@@ -1485,6 +1568,7 @@ const PlanCenter: React.FC = () => {
                 agentName: '医学方案撰写专家',
                 typing: true
             })
+            setIsRevising(true)
         }, 1500)
         timers.push(timer2)
 
@@ -1536,6 +1620,7 @@ const PlanCenter: React.FC = () => {
                 typing: true
             })
             setGeneticApprovalCompleted(true)
+            setIsRevising(false)
         }, currentDelay + 1000)
         timers.push(finalTimer)
 
@@ -1562,6 +1647,8 @@ const PlanCenter: React.FC = () => {
                         onTimelineCompression={() => setInputValue('我需要 加快进度，将基准情景压缩至20个月')}
                         showGeneticApprovalAction={activeStep === 5 && stepStatus === 'completed' && !geneticApprovalCompleted}
                         onGeneticApproval={() => setInputValue('请补充遗传资源审批相关说明')}
+                        onSelectProposal={handleProposalSelect}
+                        proposalSelected={proposalSelected}
                     />
                 </Col>
 

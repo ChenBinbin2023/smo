@@ -16,7 +16,7 @@ export const stepsData: StepData[] = [
     { title: '中心选定', icon: <MedicineBoxOutlined />, description: '资源组合' },
     { title: '合规风控', icon: <SafetyCertificateOutlined />, description: '约束检查' },
     { title: '方案撰写', icon: <FileTextOutlined />, description: '成稿迭代' },
-    { title: '评审协同', icon: <TeamOutlined />, description: '多方修订' },
+    { title: '协同评审', icon: <TeamOutlined />, description: '多方修订' },
     { title: '交付存档', icon: <FilePdfOutlined />, description: '输出留痕' },
 ]
 

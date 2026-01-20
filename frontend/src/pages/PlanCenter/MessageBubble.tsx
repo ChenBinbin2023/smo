@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
-import { Typography } from 'antd'
+import { Typography, Button, Tag } from 'antd'
+import { SelectOutlined } from '@ant-design/icons'
 import { useTypewriter } from './useTypewriter'
 import TodoList, { TodoItem } from './TodoList'
 import { Message } from './types'
@@ -9,6 +10,8 @@ const { Text } = Typography
 interface MessageBubbleProps {
     message: Message
     onTypingUpdate?: () => void
+    onShowProposalModal?: () => void  // 显示方案选择弹窗
+    proposalSelected?: boolean  // 是否已经选择过方案
 }
 
 // Render text with @mentions highlighted
@@ -22,7 +25,7 @@ const renderWithMentions = (text: string, color?: string, mentionColor?: string)
     })
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate, onShowProposalModal, proposalSelected }) => {
     const { displayedText } = useTypewriter(message.content, 30, message.typing)
 
     // Notify parent when typing updates to trigger scroll
@@ -31,6 +34,29 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate }
             onTypingUpdate()
         }
     }, [displayedText, message.typing, onTypingUpdate])
+
+    // 渲染方案选择简介 UI（详情在弹窗中显示）
+    if (message.proposalOptions && message.proposalOptions.length > 0) {
+        return (
+            <div className="space-y-2">
+                {message.content && (
+                    <Text className="block">{renderWithMentions(message.content)}</Text>
+                )}
+                {proposalSelected ? (
+                    <Tag color="success">已采纳方案</Tag>
+                ) : (
+                    <Button
+                        type="primary"
+                        size="small"
+                        icon={<SelectOutlined />}
+                        onClick={onShowProposalModal}
+                    >
+                        选择方案
+                    </Button>
+                )}
+            </div>
+        )
+    }
 
     if (message.todoList) {
         const todoItems: TodoItem[] = message.todoList.map((item, index) => {
