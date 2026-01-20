@@ -283,7 +283,7 @@ const IntelligentSelection: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                     <Tag className="cursor-pointer hover:bg-gray-100" onClick={() => setInputValue('找华东地区做过 PD-1 试验的三甲医院')}>PD-1 经验机构</Tag>
-                    <Tag className="cursor-pointer hover:bg-gray-100" onClick={() => setInputValue('北京地区 NSCLC 入组速率 Top 5')}>北京 Top 5</Tag>
+                    <Tag className="cursor-pointer hover:bg-gray-100" onClick={() => setInputValue('北京地区 NSCLC 入组速率 Top 5')}>其它</Tag>
                 </div>
             </div>
         </Card>

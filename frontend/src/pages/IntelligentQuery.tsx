@@ -93,7 +93,7 @@ const IntelligentQuery: React.FC = () => {
                                 ]}
                                 columns={[
                                     { title: '顶级 PI', dataIndex: 'name', key: 'name', render: (t) => <Space><Avatar size="small" icon={<UserOutlined />} /> <Text strong>{t}</Text></Space> },
-                                    { title: '匹配评分', dataIndex: 'score', key: 'score', render: (s) => <Progress size="small" percent={s} strokeColor="#52c41a" /> },
+                                    { title: '综合评分', dataIndex: 'score', key: 'score', render: (s) => <Progress size="small" percent={s} strokeColor="#52c41a" /> },
                                     { title: '入组速率', dataIndex: 'rate', key: 'rate' },
                                     { title: '团队规模', dataIndex: 'team', key: 'team' },
                                     { title: '操作', key: 'action', render: (_, record) => <Button type="link" size="small" onClick={() => { setSelectedPI(record); setIsDrawerVisible(true); }}>查看</Button> }
