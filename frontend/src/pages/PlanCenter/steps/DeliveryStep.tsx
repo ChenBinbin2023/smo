@@ -158,7 +158,7 @@ const DeliveryStep: React.FC = () => {
                     <Descriptions title="项目摘要 (Project Summary)" bordered column={1}>
                         <Descriptions.Item label="项目编号">GC-001-301</Descriptions.Item>
                         <Descriptions.Item label="治疗领域">Oncology / Gastric Cancer</Descriptions.Item>
-                        <Descriptions.Item label="方案设计时长">5 Day(s)</Descriptions.Item>
+                        <Descriptions.Item label="方案设计时长">1 Day(s)</Descriptions.Item>
                         <Descriptions.Item label="生成日期">2026-01-20</Descriptions.Item>
                         <Descriptions.Item label="参与专家" span={2}>
                             Project Manager, Biostatistician, Medical Monitor, Regulatory Specialist, Ops Lead, BD
