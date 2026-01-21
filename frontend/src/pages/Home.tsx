@@ -43,7 +43,7 @@ const Home = () => {
     return (
         <div className="animate-fade-in">
             <div style={{ marginBottom: 24 }}>
-                <Title level={2}>下午好，研究员 👋</Title>
+                <Title level={2}>下午好，Eric 👋</Title>
                 <Text type="secondary">欢迎回到中心选择智能决策系统，今天有 2 个新项目需要选址决策。</Text>
             </div>
 
