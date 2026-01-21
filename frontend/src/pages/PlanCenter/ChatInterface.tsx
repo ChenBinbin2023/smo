@@ -143,7 +143,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
 
     // Get quick actions based on view mode
-    const getQuickActions = () => {
+    const getQuickActions = (): Array<{ value: string; label: string }> => {
         // Hide quick actions in workflow mode
         return []
     }
