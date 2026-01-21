@@ -26,17 +26,17 @@ import PlanCenter from './pages/PlanCenter'
 const { Header, Content } = Layout
 
 const App = () => {
-    const [activeTab, setActiveTab] = useState('query')
+    const [activeTab, setActiveTab] = useState('home')
     const {
         token: { borderRadiusLG },
     } = theme.useToken()
 
     const menuItems = [
+        { key: 'home', icon: <CompassOutlined />, label: '工作台' },
         { key: 'query', icon: <BulbOutlined />, label: '智能查询' },
         { key: 'selection', icon: <SearchOutlined />, label: '中心选择' },
         { key: 'regulation', icon: <AuditOutlined />, label: '法规审查' },
-        { key: 'plan', icon: <DeploymentUnitOutlined />, label: '方案生成' },
-        { key: 'home', icon: <CompassOutlined />, label: '工作台' },
+        { key: 'plan', icon: <DeploymentUnitOutlined />, label: '方案中心' },
         { key: 'data', icon: <ContainerOutlined />, label: '数据中心' },
         { key: 'analysis', icon: <BarChartOutlined />, label: '分析中心' },
         { key: 'history', icon: <HistoryOutlined />, label: '历史选址' },
