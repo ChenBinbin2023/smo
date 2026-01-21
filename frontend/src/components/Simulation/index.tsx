@@ -313,7 +313,17 @@ const SimulationCenter: React.FC = () => {
                                 <Button block type="primary">
                                     生成风险预案
                                 </Button>
-                                <Button block>
+                                <Button 
+                                    block
+                                    onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = '/reports/中心选择方案-SPOTLIGHT-GC-301.pdf';
+                                        link.download = '中心选择方案-SPOTLIGHT-GC-301.pdf';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }}
+                                >
                                     导出模拟报告
                                 </Button>
                             </div>
