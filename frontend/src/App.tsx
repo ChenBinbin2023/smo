@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Layout, Menu, theme, Button, Space, Avatar, Badge, Tooltip } from 'antd'
+import { Layout, Menu, theme, Button, Space, Avatar, Badge, Tooltip, Switch } from 'antd'
 import {
     SearchOutlined,
     CompassOutlined,
@@ -19,28 +19,26 @@ import Home from './pages/Home'
 import IntelligentSelection from './pages/IntelligentSelection'
 import IntelligentQuery from './pages/IntelligentQuery'
 import RegulatoryReview from './pages/RegulatoryReview'
-import DataCenter from './pages/DataCenter'
-import AnalysisCenter from './pages/AnalysisCenter'
 import PlanCenter from './pages/PlanCenter'
+import { LanguageProvider, useLanguage } from './context/LanguageContext'
 
 const { Header, Content } = Layout
 
-const App = () => {
+const AppContent = () => {
     const [activeTab, setActiveTab] = useState('home')
     const {
         token: { borderRadiusLG },
     } = theme.useToken()
+    const { language, setLanguage, t } = useLanguage();
 
     const menuItems = [
-        { key: 'home', icon: <CompassOutlined />, label: '工作台' },
-        { key: 'query', icon: <BulbOutlined />, label: '智能查询' },
-        { key: 'selection', icon: <SearchOutlined />, label: '中心选择' },
-        { key: 'regulation', icon: <AuditOutlined />, label: '法规审查' },
-        { key: 'plan', icon: <DeploymentUnitOutlined />, label: '方案中心' },
-        { key: 'data', icon: <ContainerOutlined />, label: '数据中心' },
-        { key: 'analysis', icon: <BarChartOutlined />, label: '分析中心' },
-        { key: 'history', icon: <HistoryOutlined />, label: '历史选址' },
-        { key: 'settings', icon: <SettingOutlined />, label: '系统设置' },
+        { key: 'home', icon: <CompassOutlined />, label: t('workbench') },
+        { key: 'query', icon: <BulbOutlined />, label: t('intelligentQuery') },
+        { key: 'selection', icon: <SearchOutlined />, label: t('siteSelection') },
+        { key: 'regulation', icon: <AuditOutlined />, label: t('regulatoryReview') },
+        { key: 'plan', icon: <DeploymentUnitOutlined />, label: t('planCenter') },
+        { key: 'history', icon: <HistoryOutlined />, label: t('history') },
+        { key: 'settings', icon: <SettingOutlined />, label: t('settings') },
     ]
 
     const renderContent = () => {
@@ -50,8 +48,6 @@ const App = () => {
             case 'selection': return <IntelligentSelection />
             case 'query': return <IntelligentQuery />
             case 'regulation': return <RegulatoryReview />
-            case 'data': return <DataCenter />
-            case 'analysis': return <AnalysisCenter />
             default: return <Home />
         }
     }
@@ -77,7 +73,7 @@ const App = () => {
                     minWidth: 120
                 }}>
                     <AppstoreOutlined style={{ fontSize: 24, color: '#1677ff', marginRight: 12 }} />
-                    <span style={{ fontSize: 20, fontWeight: 700, color: '#1f1f1f' }}>SMO Pro</span>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#1f1f1f' }}>HAWKEYE</span>
                 </div>
 
                 <Menu
@@ -94,21 +90,30 @@ const App = () => {
                 />
 
                 <Space size={20}>
-                    <Tooltip title="全局搜索">
+                    <Space>
+                        <span style={{ fontSize: 14, color: language === 'zh' ? '#1677ff' : '#666', fontWeight: language === 'zh' ? 'bold' : 'normal' }}>中</span>
+                        <Switch
+                            checked={language === 'en'}
+                            onChange={(checked) => setLanguage(checked ? 'en' : 'zh')}
+                            size="small"
+                        />
+                        <span style={{ fontSize: 14, color: language === 'en' ? '#1677ff' : '#666', fontWeight: language === 'en' ? 'bold' : 'normal' }}>En</span>
+                    </Space>
+                    <Tooltip title={t('globalSearch')}>
                         <Button type="text" icon={<SearchOutlined />} />
                     </Tooltip>
-                    <Tooltip title="消息通知">
+                    <Tooltip title={t('notifications')}>
                         <Badge count={5} size="small">
                             <Button type="text" icon={<BellOutlined />} />
                         </Badge>
                     </Tooltip>
-                    <Tooltip title="在线帮助">
+                    <Tooltip title={t('help')}>
                         <Button type="text" icon={<MessageOutlined />} />
                     </Tooltip>
                     <div style={{ width: 1, height: 24, background: '#f0f0f0' }} />
                     <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}>
                         <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} size="small" />
-                        <span style={{ fontWeight: 500, color: '#333' }}>管理员</span>
+                        <span style={{ fontWeight: 500, color: '#333' }}>{t('admin')}</span>
                     </Space>
                 </Space>
             </Header>
@@ -134,6 +139,12 @@ const App = () => {
                 </div>
             </Content>
         </Layout>
+    )
+}
+
+const App = () => {
+    return (
+        <AppContent />
     )
 }
 

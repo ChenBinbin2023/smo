@@ -1,54 +1,88 @@
 import React from 'react'
 import { Card, Table, Tag, Typography, Row, Col, Button, List } from 'antd'
 import { FileSearchOutlined, AlertOutlined, CheckSquareOutlined, FileProtectOutlined } from '@ant-design/icons'
+import { useLanguage } from '../../../context/LanguageContext'
 
 const { Text, Paragraph } = Typography
 
 const RiskComplianceStep: React.FC = () => {
+    const { language } = useLanguage()
+
     // 1. 适用法规清单
-    const regulationData = [
+    const regulationDataZh = [
         { key: '1', regulation: 'ICH-GCP E6(R2)', scope: '国际临床试验规范', requirement: '受试者权益保护、知情同意、数据完整性' },
         { key: '2', regulation: '《药物临床试验质量管理规范》', scope: '中国GCP', requirement: '伦理审查、研究者资质、不良事件报告' },
         { key: '3', regulation: '《涉及人的生物医学研究伦理审查办法》', scope: '伦理审查', requirement: '知情同意书内容、弱势群体保护' },
         { key: '4', regulation: '《数据安全法》《个人信息保护法》', scope: '数据合规', requirement: '数据跨境传输、去标识化、隐私保护' },
         { key: '5', regulation: '《人类遗传资源管理条例》', scope: '生物样本', requirement: '遗传资源采集审批、出境审批' },
     ]
+    const regulationDataEn = [
+        { key: '1', regulation: 'ICH-GCP E6(R2)', scope: 'Intl GCP', requirement: 'Subject rights, ICF, Data integrity' },
+        { key: '2', regulation: 'China GCP 2020', scope: 'China GCP', requirement: 'Ethics review, PI qualification, AE reporting' },
+        { key: '3', regulation: 'Biomedical Ethics Regs', scope: 'Ethics', requirement: 'ICF content, vulnerable group protection' },
+        { key: '4', regulation: 'DSL & PIPL', scope: 'Data Compliance', requirement: 'Cross-border data, de-identification, privacy' },
+        { key: '5', regulation: 'HGR Management Regs', scope: 'Biosamples', requirement: 'HGR collection/export approval' },
+    ]
+    const regulationData = language === 'zh' ? regulationDataZh : regulationDataEn
 
     const regulationColumns = [
-        { title: '法规名称', dataIndex: 'regulation', key: 'regulation', width: '30%' },
-        { title: '适用范围', dataIndex: 'scope', key: 'scope', width: '20%' },
-        { title: '核心要求', dataIndex: 'requirement', key: 'requirement' },
+        { title: language === 'zh' ? '法规名称' : 'Regulation', dataIndex: 'regulation', key: 'regulation', width: '30%' },
+        { title: language === 'zh' ? '适用范围' : 'Scope', dataIndex: 'scope', key: 'scope', width: '20%' },
+        { title: language === 'zh' ? '核心要求' : 'Core Requirements', dataIndex: 'requirement', key: 'requirement' },
     ]
 
     // 2. 风险点与编写建议
-    const riskData = [
+    const riskDataZh = [
         { key: '1', riskPoint: '安慰剂对照设计', priority: 'high', suggestion: '方案中应增加中期分析和早期终止规则，明确患者退出后的替代治疗方案' },
         { key: '2', riskPoint: '数据跨境传输', priority: 'high', suggestion: '方案中需说明数据出境安全评估情况，明确数据存储和传输的加密措施' },
         { key: '3', riskPoint: '采血频率与样本量', priority: 'medium', suggestion: '建议合并部分PK采血点，减少受试者负担，并在方案中说明必要性' },
-        { key: '4', riskPoint: '弱势群体入组', priority: 'medium', suggestion: '如涉及老年人/未成年人，方案中需有额外保护措施和专门的知情同意流程' },
+        { key: '4', riskPoint: '弱势群体入组', priority: 'medium', suggestion: '如涉及老年人/未成年人，方案中需有额外保护措施 and 专门的知情同意流程' },
         { key: '5', riskPoint: '生物样本保存与使用', priority: 'low', suggestion: '方案中应明确样本用途范围、保存期限及销毁条件' },
     ]
+    const riskDataEn = [
+        { key: '1', riskPoint: 'Placebo Design', priority: 'high', suggestion: 'Add interim analysis and early termination rules, specify alternative treatment' },
+        { key: '2', riskPoint: 'Cross-border Data', priority: 'high', suggestion: 'Describe security assessment and encryption for data transfer' },
+        { key: '3', riskPoint: 'Sampling Frequency', priority: 'medium', suggestion: 'Consolidate PK points to reduce burden and justify the necessity' },
+        { key: '4', riskPoint: 'Vulnerable Groups', priority: 'medium', suggestion: 'Extra protection and specialized ICF for elderly/minors' },
+        { key: '5', riskPoint: 'Sample Storage', priority: 'low', suggestion: 'Clarify usage scope, storage period, and disposal criteria' },
+    ]
+    const riskData = language === 'zh' ? riskDataZh : riskDataEn
 
     const riskColumns = [
-        { title: '风险点', dataIndex: 'riskPoint', key: 'riskPoint', width: '20%' },
-        { title: '关注度', dataIndex: 'priority', key: 'priority', width: '12%', render: (t: string) => <Tag color={t === 'high' ? 'red' : t === 'medium' ? 'orange' : 'blue'}>{t === 'high' ? '高' : t === 'medium' ? '中' : '低'}</Tag> },
-        { title: '编写建议', dataIndex: 'suggestion', key: 'suggestion' }
+        { title: language === 'zh' ? '风险点' : 'Risk Point', dataIndex: 'riskPoint', key: 'riskPoint', width: '20%' },
+        {
+            title: language === 'zh' ? '关注度' : 'Priority', dataIndex: 'priority', key: 'priority', width: '12%', render: (t: string) => {
+                let color = t === 'high' ? 'red' : t === 'medium' ? 'orange' : 'blue'
+                let label = language === 'zh'
+                    ? (t === 'high' ? '高' : t === 'medium' ? '中' : '低')
+                    : (t === 'high' ? 'High' : t === 'medium' ? 'Med' : 'Low')
+                return <Tag color={color}>{label}</Tag>
+            }
+        },
+        { title: language === 'zh' ? '编写建议' : 'Suggestion', dataIndex: 'suggestion', key: 'suggestion' }
     ]
 
     // 3. 合规要点清单
-    const checklistItems = [
+    const checklistItemsZh = [
         { category: '知情同意', items: ['知情同意书语言通俗易懂', '明确告知风险与获益', '说明退出权利与后续治疗'] },
         { category: '受试者保护', items: ['受试者补偿方案合理', '不良事件报告与处理流程', '紧急揭盲程序'] },
         { category: '数据管理', items: ['数据采集与存储方案', '数据跨境传输合规说明', '去标识化与隐私保护措施'] },
         { category: '生物样本', items: ['样本采集目的与用途', '遗传资源审批情况', '样本保存期限与销毁'] },
     ]
+    const checklistItemsEn = [
+        { category: 'Informed Consent', items: ['Clear/understandable language', 'Risk/benefit disclosure', 'Exit rights & follow-up care'] },
+        { category: 'Subject Protection', items: ['Reasonable compensation', 'AE reporting flow', 'Unblinding procedure'] },
+        { category: 'Data Management', items: ['Collection & storage plan', 'Cross-border compliance', 'Privacy measures'] },
+        { category: 'Biosamples', items: ['Purpose & usage', 'HGR approval status', 'Storage & disposal'] },
+    ]
+    const checklistItems = language === 'zh' ? checklistItemsZh : checklistItemsEn
 
     return (
         <div className="space-y-6">
             {/* 1. 适用法规清单 */}
             <Card
                 size="small"
-                title={<div className="flex items-center gap-2"><FileSearchOutlined className="text-blue-500" /><span>适用法规清单</span></div>}
+                title={<div className="flex items-center gap-2"><FileSearchOutlined className="text-blue-500" /><span>{language === 'zh' ? '适用法规清单' : 'Applicable Regulations'}</span></div>}
                 className="shadow-sm"
             >
                 <Table
@@ -62,7 +96,7 @@ const RiskComplianceStep: React.FC = () => {
             {/* 2. 风险点与编写建议 */}
             <Card
                 size="small"
-                title={<div className="flex items-center gap-2"><AlertOutlined className="text-orange-500" /><span>风险点与编写建议</span></div>}
+                title={<div className="flex items-center gap-2"><AlertOutlined className="text-orange-500" /><span>{language === 'zh' ? '风险点与编写建议' : 'Risk Points & Suggestions'}</span></div>}
                 className="shadow-sm"
             >
                 <Table
@@ -76,17 +110,19 @@ const RiskComplianceStep: React.FC = () => {
             {/* 3. 合规要点清单 */}
             <Card
                 size="small"
-                title={<div className="flex items-center gap-2"><CheckSquareOutlined className="text-green-500" /><span>方案编写合规要点</span></div>}
+                title={<div className="flex items-center gap-2"><CheckSquareOutlined className="text-green-500" /><span>{language === 'zh' ? '方案编写合规要点' : 'Compliance Checklist'}</span></div>}
                 className="shadow-sm"
             >
                 <div className="space-y-4">
                     <Paragraph className="text-gray-500 text-sm mb-4">
-                        以下为方案编写时需覆盖的关键合规要点，将在后续方案撰写阶段自动检查：
+                        {language === 'zh'
+                            ? '以下为方案编写时需覆盖的关键合规要点，将在后续方案撰写阶段自动检查：'
+                            : 'Key points to be covered during drafting, which will be automatically checked:'}
                     </Paragraph>
                     <Row gutter={[16, 16]}>
                         {checklistItems.map((group, idx) => (
                             <Col span={12} key={idx}>
-                                <div className="bg-gray-50 p-3 rounded border border-gray-100">
+                                <div className="bg-gray-50 p-3 rounded border border-gray-100 h-full">
                                     <Text strong className="text-sm">{group.category}</Text>
                                     <List
                                         size="small"
@@ -106,8 +142,12 @@ const RiskComplianceStep: React.FC = () => {
                         ))}
                     </Row>
                     <div className="border-t pt-4 mt-4 flex justify-between items-center">
-                        <Text type="secondary" className="text-sm">共 {checklistItems.reduce((acc, g) => acc + g.items.length, 0)} 项合规要点，将在方案撰写阶段逐项核验</Text>
-                        <Button type="primary" size="small" icon={<FileProtectOutlined />}>导出合规指南</Button>
+                        <Text type="secondary" className="text-sm">
+                            {language === 'zh'
+                                ? `共 ${checklistItems.reduce((acc, g) => acc + g.items.length, 0)} 项合规要点，将在方案撰写阶段逐项核验`
+                                : `Total ${checklistItems.reduce((acc, g) => acc + g.items.length, 0)} points to be verified.`}
+                        </Text>
+                        <Button type="primary" size="small" icon={<FileProtectOutlined />}>{language === 'zh' ? '导出合规指南' : 'Export Guidelines'}</Button>
                     </div>
                 </div>
             </Card>

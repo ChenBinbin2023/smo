@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Select, Button, Space, Modal, Form, Input, Tag, Typography, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, CopyOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useScheme } from '../../context/SchemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SelectionScheme } from '../../types';
 import { motion } from 'framer-motion';
 
@@ -9,6 +10,7 @@ const { Text } = Typography;
 
 const SchemeSelector: React.FC = () => {
     const { currentScheme, schemes, setCurrentScheme, addScheme } = useScheme();
+    const { language } = useLanguage();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
 
@@ -23,7 +25,7 @@ const SchemeSelector: React.FC = () => {
         const values = form.getFieldsValue();
         const newScheme: SelectionScheme = {
             id: `scheme-${Date.now()}`,
-            name: values.name || '新建选址方案',
+            name: values.name || (language === 'zh' ? '新建选址方案' : 'New Selection Scheme'),
             version: 1,
             status: 'draft',
             creatorId: 'user-1',
@@ -62,9 +64,9 @@ const SchemeSelector: React.FC = () => {
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'confirmed': return '已确认';
-            case 'locked': return '已锁定';
-            default: return '草稿';
+            case 'confirmed': return language === 'zh' ? '已确认' : 'Confirmed';
+            case 'locked': return language === 'zh' ? '已锁定' : 'Locked';
+            default: return language === 'zh' ? '草稿' : 'Draft';
         }
     };
 
@@ -89,7 +91,7 @@ const SchemeSelector: React.FC = () => {
                 ))}
             </Select>
 
-            <Tooltip title="新建方案">
+            <Tooltip title={language === 'zh' ? "新建方案" : "New Scheme"}>
                 <Button
                     type="text"
                     icon={<PlusOutlined />}
@@ -97,7 +99,7 @@ const SchemeSelector: React.FC = () => {
                 />
             </Tooltip>
 
-            <Tooltip title="方案管理">
+            <Tooltip title={language === 'zh' ? "方案管理" : "Scheme Management"}>
                 <Button
                     type="text"
                     icon={<SettingOutlined />}
@@ -105,29 +107,29 @@ const SchemeSelector: React.FC = () => {
             </Tooltip>
 
             <Modal
-                title="新建选址方案"
+                title={language === 'zh' ? "新建选址方案" : "New Selection Scheme"}
                 open={isModalOpen}
                 onOk={handleCreate}
                 onCancel={() => setIsModalOpen(false)}
-                okText="创建"
-                cancelText="取消"
+                okText={language === 'zh' ? "创建" : "Create"}
+                cancelText={language === 'zh' ? "取消" : "Cancel"}
             >
                 <Form form={form} layout="vertical">
                     <Form.Item
                         name="name"
-                        label="方案名称"
-                        rules={[{ required: true, message: '请输入方案名称' }]}
+                        label={language === 'zh' ? "方案名称" : "Scheme Name"}
+                        rules={[{ required: true, message: language === 'zh' ? '请输入方案名称' : 'Please input scheme name' }]}
                     >
-                        <Input placeholder="例如：华东区 NSCLC III 期选址方案 v1" />
+                        <Input placeholder={language === 'zh' ? "例如：华东区 NSCLC III 期选址方案 v1" : "e.g., East China NSCLC Phase III Scheme v1"} />
                     </Form.Item>
                     <Form.Item
                         name="template"
-                        label="使用模板"
+                        label={language === 'zh' ? "使用模板" : "Use Template"}
                     >
-                        <Select placeholder="选择模板（可选）">
-                            <Select.Option value="tumor">肿瘤项目选址方案（标准版）</Select.Option>
-                            <Select.Option value="medical">医疗器械项目选址方案</Select.Option>
-                            <Select.Option value="rare">罕见病项目选址方案</Select.Option>
+                        <Select placeholder={language === 'zh' ? "选择模板（可选）" : "Select template (optional)"}>
+                            <Select.Option value="tumor">{language === 'zh' ? '肿瘤项目选址方案（标准版）' : 'Oncology Standard'}</Select.Option>
+                            <Select.Option value="medical">{language === 'zh' ? '医疗器械项目选址方案' : 'Medical Device Standard'}</Select.Option>
+                            <Select.Option value="rare">{language === 'zh' ? '罕见病项目选址方案' : 'Rare Disease Standard'}</Select.Option>
                         </Select>
                     </Form.Item>
                 </Form>

@@ -2,13 +2,18 @@ import React from 'react'
 import { Card, Button, Tag, Table } from 'antd'
 import { FolderOpenOutlined } from '@ant-design/icons'
 import { PlanItem } from './types'
-import { mockPlans } from './mockData'
+import { mockPlansZh, mockPlansEn } from './mockData'
+import { useLanguage } from '../../context/LanguageContext'
 
 interface PlanListProps {
     onSelectPlan: (planId: string) => void;
 }
 
 const PlanList: React.FC<PlanListProps> = ({ onSelectPlan }) => {
+    const { language } = useLanguage()
+
+    const mockPlans = language === 'zh' ? mockPlansZh : mockPlansEn
+
     const statusColors = {
         'draft': 'default',
         'in-progress': 'processing',
@@ -16,41 +21,41 @@ const PlanList: React.FC<PlanListProps> = ({ onSelectPlan }) => {
     }
 
     const statusLabels = {
-        'draft': '草稿',
-        'in-progress': '进行中',
-        'completed': '已完成'
+        'draft': language === 'zh' ? '草稿' : 'Draft',
+        'in-progress': language === 'zh' ? '进行中' : 'In Progress',
+        'completed': language === 'zh' ? '已完成' : 'Completed'
     }
 
     const columns = [
         {
-            title: '方案名称',
+            title: language === 'zh' ? '方案名称' : 'Plan Name',
             dataIndex: 'name',
             key: 'name',
             width: '35%',
             render: (text: string) => <span className="font-medium">{text}</span>
         },
         {
-            title: '适应症',
+            title: language === 'zh' ? '适应症' : 'Indication',
             dataIndex: 'indication',
             key: 'indication',
         },
         {
-            title: '分期',
+            title: language === 'zh' ? '分期' : 'Phase',
             dataIndex: 'phase',
             key: 'phase',
         },
         {
-            title: '申办方',
+            title: language === 'zh' ? '申办方' : 'Sponsor',
             dataIndex: 'sponsor',
             key: 'sponsor',
         },
         {
-            title: '创建时间',
+            title: language === 'zh' ? '创建时间' : 'Created At',
             dataIndex: 'createdAt',
             key: 'createdAt',
         },
         {
-            title: '状态',
+            title: language === 'zh' ? '状态' : 'Status',
             dataIndex: 'status',
             key: 'status',
             render: (status: keyof typeof statusColors) => (
@@ -58,7 +63,7 @@ const PlanList: React.FC<PlanListProps> = ({ onSelectPlan }) => {
             )
         },
         {
-            title: '操作',
+            title: language === 'zh' ? '操作' : 'Action',
             key: 'action',
             render: (_: any, record: PlanItem) => (
                 <Button
@@ -66,7 +71,7 @@ const PlanList: React.FC<PlanListProps> = ({ onSelectPlan }) => {
                     icon={<FolderOpenOutlined />}
                     onClick={() => onSelectPlan(record.id)}
                 >
-                    打开
+                    {language === 'zh' ? '打开' : 'Open'}
                 </Button>
             )
         }
@@ -74,7 +79,7 @@ const PlanList: React.FC<PlanListProps> = ({ onSelectPlan }) => {
 
     return (
         <div className="h-full p-6 bg-white">
-            <h2 className="text-xl font-bold mb-4">方案列表</h2>
+            <h2 className="text-xl font-bold mb-4">{language === 'zh' ? '方案列表' : 'Plan List'}</h2>
             <Table
                 columns={columns}
                 dataSource={mockPlans}

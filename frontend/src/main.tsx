@@ -5,6 +5,7 @@ import './index.css'
 import { ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import { SchemeProvider } from './context/SchemeContext'
+import { LanguageProvider } from './context/LanguageContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -23,9 +24,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 },
             }}
         >
-            <SchemeProvider>
-                <App />
-            </SchemeProvider>
+            <LanguageProvider>
+                <SchemeProvider>
+                    <App />
+                </SchemeProvider>
+            </LanguageProvider>
         </ConfigProvider>
     </React.StrictMode>,
 )

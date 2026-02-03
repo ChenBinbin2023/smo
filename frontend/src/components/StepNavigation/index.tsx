@@ -1,23 +1,24 @@
 import React from 'react';
 import { Steps, Space, Tag } from 'antd';
-import { CheckCircleFilled } from '@ant-design/icons';
 import { useScheme } from '../../context/SchemeContext';
 import { StepKey } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface StepNavProps {
     onStepChange?: (step: StepKey) => void;
 }
 
-const stepConfig: { key: StepKey; title: string; description: string }[] = [
-    { key: 'requirement', title: '需求定义', description: 'CUI 解析需求' },
-    { key: 'recommendation', title: '中心推荐', description: '指标识别与画像' },
-    { key: 'comparison', title: '中心对比', description: '多维度对标分析' },
-    { key: 'compliance', title: '合规检查', description: '资质合规与风险' },
-    { key: 'simulation', title: '模拟行动', description: '预测模拟与预案' }
-];
-
 const StepNavigation: React.FC<StepNavProps> = ({ onStepChange }) => {
     const { currentStep, setCurrentStep } = useScheme();
+    const { t } = useLanguage();
+
+    const stepConfig: { key: StepKey; title: string; description: string }[] = [
+        { key: 'requirement', title: t('stepRequirement'), description: t('descRequirement') },
+        { key: 'recommendation', title: t('stepRecommendation'), description: t('descRecommendation') },
+        { key: 'comparison', title: t('stepComparison'), description: t('descComparison') },
+        { key: 'compliance', title: t('stepCompliance'), description: t('descCompliance') },
+        { key: 'simulation', title: t('stepSimulation'), description: t('descSimulation') }
+    ];
 
     const currentIndex = stepConfig.findIndex(s => s.key === currentStep);
 
@@ -53,7 +54,7 @@ const StepNavigation: React.FC<StepNavProps> = ({ onStepChange }) => {
                 <Space>
                     <Tag color="blue">{stepConfig[currentIndex].title}</Tag>
                     <span style={{ color: '#999', fontSize: 12 }}>
-                        第 {currentIndex + 1} / {stepConfig.length} 步
+                        {t('stepPrefix')}{currentIndex + 1}{t('stepDivider')}{stepConfig.length}{t('stepSuffix')}
                     </span>
                 </Space>
             </div>

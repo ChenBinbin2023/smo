@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Space, Button, Typography, Row, Col, Progress, Alert } from 'antd';
 import { CheckCircleFilled, BarChartOutlined, BulbOutlined } from '@ant-design/icons';
 import { useScheme } from '../context/SchemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Institution } from '../types';
 
 const { Title, Text } = Typography;
 
 const CenterComparison: React.FC = () => {
-    const { getSchemeInstitutions, allInstitutions } = useScheme();
+    const { getSchemeInstitutions, allInstitutions, setCurrentStep } = useScheme();
     const institutions = getSchemeInstitutions();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const { language, t } = useLanguage();
 
     useEffect(() => {
         if (institutions.length > 0) {
@@ -24,7 +26,7 @@ const CenterComparison: React.FC = () => {
 
     const columns = [
         {
-            title: '对比指标',
+            title: language === 'zh' ? '对比指标' : 'Indicator',
             dataIndex: 'indicator',
             key: 'indicator',
             width: 150,
@@ -41,7 +43,7 @@ const CenterComparison: React.FC = () => {
             }
         })),
         {
-            title: '结论建议',
+            title: language === 'zh' ? '结论建议' : 'Conclusion',
             dataIndex: 'conclusion',
             key: 'conclusion',
             width: 200,
@@ -58,42 +60,42 @@ const CenterComparison: React.FC = () => {
     const comparisonData = [
         {
             key: 'score',
-            indicator: '综合评分',
+            indicator: language === 'zh' ? '综合评分' : 'Overall Score',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.score])),
-            conclusion: '复旦肿瘤综合指标最优，为首选中心。',
+            conclusion: language === 'zh' ? '复旦肿瘤综合指标最优，为首选中心。' : 'Fudan Cancer Center has the best overall indicators and is the primary site.',
             render: (v: number) => <Progress percent={v} size="small" strokeColor={v > 90 ? '#52c41a' : '#1677ff'} />
         },
         {
             key: 'rate',
-            indicator: '预计月入组',
+            indicator: language === 'zh' ? '预计月入组' : 'Est. Monthly Enrollment',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.rate])),
-            conclusion: '华东区整体入组速率高于平均。',
-            render: (v: number) => <Tag color="blue">{v} 人/月</Tag>
+            conclusion: language === 'zh' ? '华东区整体入组速率高于平均。' : 'Enrollment rate in East China is generally above average.',
+            render: (v: number) => <Tag color="blue">{v} {language === 'zh' ? '人/月' : 'pts/mo'}</Tag>
         },
         {
             key: 'ethics',
-            indicator: '伦理审批',
+            indicator: language === 'zh' ? '伦理审批' : 'Ethics Approval',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.ethicsApproval])),
-            conclusion: '中山中心审批最快，仅需12天。',
+            conclusion: language === 'zh' ? '中山中心审批最快，仅需12天。' : 'SYSUCC has the fastest approval, only 12 days.',
         },
         {
             key: 'contract',
-            indicator: '合同周期',
+            indicator: language === 'zh' ? '合同周期' : 'Contract Cycle',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.contractApproval])),
-            conclusion: '北京肿瘤历史周期较长。',
+            conclusion: language === 'zh' ? '北京肿瘤历史周期较长。' : 'Beijing Cancer Hospital has a long historical cycle.',
         },
         {
             key: 'pi_load',
-            indicator: 'PI 在研项目',
+            indicator: language === 'zh' ? 'PI 在研项目' : 'Ongoing Projects (PI)',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.piLoad])),
-            conclusion: '张PI负荷超过临界值(4项)。',
+            conclusion: language === 'zh' ? '张PI负荷超过临界值(4项)。' : 'PI Zhang\'s load exceeds the critical value (4 projects).',
             render: (v: string) => <Text type={parseFloat(v) > 4 ? 'danger' : 'secondary'}>{v}</Text>
         },
         {
             key: 'crc',
-            indicator: 'CRC 配置',
+            indicator: language === 'zh' ? 'CRC 配置' : 'CRC Allocation',
             values: Object.fromEntries(allInstitutions.map(i => [i.id, i.crcRatio])),
-            conclusion: '资源配置充足，满足 1:1.5 要求。',
+            conclusion: language === 'zh' ? '资源配置充足，满足 1:1.5 要求。' : 'Resource allocation is sufficient, meets 1:1.5 requirement.',
         }
     ];
 
@@ -103,11 +105,17 @@ const CenterComparison: React.FC = () => {
                 <div className="flex justify-between items-center w-full">
                     <Space>
                         <BarChartOutlined />
-                        <span>中心推荐策略对比</span>
+                        <span>{language === 'zh' ? '中心推荐策略对比' : 'Comparison of Site Recommendation Strategies'}</span>
                     </Space>
                     <Space>
-                        <Button size="small">策略调整</Button>
-                        <Button type="primary" size="small">确认此中心组合</Button>
+                        <Button size="small">{language === 'zh' ? '策略调整' : 'Strategy Adjustment'}</Button>
+                        <Button
+                            type="primary"
+                            size="small"
+                            onClick={() => setCurrentStep('compliance')}
+                        >
+                            {language === 'zh' ? '确认此中心组合' : 'Confirm Site Combination'}
+                        </Button>
                     </Space>
                 </div>
             }>
@@ -122,12 +130,18 @@ const CenterComparison: React.FC = () => {
 
                 <div className="mt-6">
                     <Alert
-                        message="AI 优选建议"
+                        message={language === 'zh' ? "AI 优选建议" : "AI Optimal Recommendation"}
                         description={
                             <div className="mt-2 text-sm text-gray-600">
-                                基于当前 <Text strong>NSCLC III期项目</Text> 需求，系统推荐优先启动 <Text strong>复旦肿瘤</Text> 和 <Text strong>中山肿瘤</Text>。
-                                这两个中心在既往相似项目中表现出更强的入组启动协同效率。
-                                注意：<Text type="warning">北京肿瘤</Text> 存在高 PI 负荷风险，建议作为备选中心。
+                                {language === 'zh'
+                                    ? <>基于当前 <Text strong>NSCLC III期项目</Text> 需求，系统推荐优先启动 <Text strong>复旦肿瘤</Text> 和 <Text strong>中山肿瘤</Text>。</>
+                                    : <>Based on current <Text strong>NSCLC Phase III</Text> requirements, the system recommends prioritizing <Text strong>Fudan Cancer Center</Text> and <Text strong>SYSUCC</Text>.</>}
+                                {language === 'zh'
+                                    ? ' 这两个中心在既往相似项目中表现出更强的入组启动协同效率。'
+                                    : ' These two sites have shown stronger enrollment and startup synergy in past similar projects.'}
+                                {language === 'zh'
+                                    ? <> 注意：<Text type="warning">北京肿瘤</Text> 存在高 PI 负荷风险，建议作为备选中心。</>
+                                    : <> Note: <Text type="warning">Beijing Cancer Hospital</Text> has a high PI load risk, suggested as an alternative site.</>}
                             </div>
                         }
                         type="info"

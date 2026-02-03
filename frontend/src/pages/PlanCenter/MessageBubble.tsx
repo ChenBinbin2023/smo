@@ -4,6 +4,7 @@ import { SelectOutlined } from '@ant-design/icons'
 import { useTypewriter } from './useTypewriter'
 import TodoList, { TodoItem } from './TodoList'
 import { Message } from './types'
+import { useLanguage } from '../../context/LanguageContext'
 
 const { Text } = Typography
 
@@ -27,6 +28,7 @@ const renderWithMentions = (text: string, color?: string, mentionColor?: string)
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate, onShowProposalModal, proposalSelected }) => {
     const { displayedText } = useTypewriter(message.content, 30, message.typing)
+    const { language } = useLanguage();
 
     // Notify parent when typing updates to trigger scroll
     useEffect(() => {
@@ -43,7 +45,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate, 
                     <Text className="block">{renderWithMentions(message.content)}</Text>
                 )}
                 {proposalSelected ? (
-                    <Tag color="success">已采纳方案</Tag>
+                    <Tag color="success">{language === 'zh' ? '已采纳方案' : 'Proposal Adopted'}</Tag>
                 ) : (
                     <Button
                         type="primary"
@@ -51,7 +53,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onTypingUpdate, 
                         icon={<SelectOutlined />}
                         onClick={onShowProposalModal}
                     >
-                        选择方案
+                        {language === 'zh' ? '选择方案' : 'Select Proposal'}
                     </Button>
                 )}
             </div>

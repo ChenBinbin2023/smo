@@ -2,9 +2,8 @@ import React from 'react'
 import { Card, Steps, Button, Typography, Spin } from 'antd'
 import { ArrowRightOutlined, ArrowLeftOutlined, CheckCircleFilled, LoadingOutlined } from '@ant-design/icons'
 import { motion, AnimatePresence } from 'framer-motion'
-import { stepsData } from './mockData'
+import { stepsDataEn, stepsDataZh } from './mockData'
 import RequirementAnalysis from './RequirementAnalysis'
-import TodoList from './TodoList'
 import {
     DataCollectionStep,
     FeasibilityStep,
@@ -14,6 +13,7 @@ import {
     ReviewStep,
     DeliveryStep
 } from './steps'
+import { useLanguage } from '../../context/LanguageContext'
 
 const { Text } = Typography
 
@@ -46,6 +46,9 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
     geneticApprovalCompleted = false,
     isRevising = false
 }) => {
+    const { t, language } = useLanguage();
+    const stepsData = language === 'zh' ? stepsDataZh : stepsDataEn;
+
     const renderStepContent = () => {
         // Step 0: Requirement Analysis
         if (activeStep === 0) {
@@ -53,8 +56,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                        <Text type="secondary" className="text-lg">需求分析进行中...</Text>
-                        <Text type="secondary">正在解析RFP文件并分析需求...</Text>
+                        <Text type="secondary" className="text-lg">{t('requirementAnalysis')} {t('inProgressStatus')}</Text>
+                        <Text type="secondary">{language === 'zh' ? '正在解析RFP文件并分析需求...' : 'Parsing RFP document and analyzing requirements...'}</Text>
                     </div>
                 )
             } else if (stepStatus === 'completed') {
@@ -62,7 +65,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
             } else {
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Text type="secondary" className="text-lg">等待开始需求分析...</Text>
+                        <Text type="secondary" className="text-lg">{t('waitingToStart')} {t('requirementAnalysis').toLowerCase()}...</Text>
                     </div>
                 )
             }
@@ -74,8 +77,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                        <Text type="secondary" className="text-lg">资料收集进行中...</Text>
-                        <Text type="secondary">数据专家正在聚合历史数据和中心画像...</Text>
+                        <Text type="secondary" className="text-lg">{t('dataCollection')} {t('inProgressStatus')}</Text>
+                        <Text type="secondary">{language === 'zh' ? '数据专家正在聚合历史数据与中心画像...' : 'Data experts are aggregating historical data and center profiles...'}</Text>
                     </div>
                 )
             } else if (stepStatus === 'completed') {
@@ -83,7 +86,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
             } else {
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Text type="secondary" className="text-lg">等待开始资料收集...</Text>
+                        <Text type="secondary" className="text-lg">{t('waitingToStart')} {t('dataCollection').toLowerCase()}...</Text>
                     </div>
                 )
             }
@@ -95,8 +98,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                        <Text type="secondary" className="text-lg">可行性评估进行中...</Text>
-                        <Text type="secondary">可行性专家正在分析入组空间与区域策略...</Text>
+                        <Text type="secondary" className="text-lg">{t('feasibilityAssessment')} {t('inProgressStatus')}</Text>
+                        <Text type="secondary">{language === 'zh' ? '可行性专家正在分析入组空间与区域策略...' : 'Feasibility experts are analyzing enrollment space and regional strategies...'}</Text>
                     </div>
                 )
             } else if (stepStatus === 'completed') {
@@ -104,7 +107,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
             } else {
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Text type="secondary" className="text-lg">等待开始可行性评估...</Text>
+                        <Text type="secondary" className="text-lg">{t('waitingToStart')} {t('feasibilityAssessment').toLowerCase()}...</Text>
                     </div>
                 )
             }
@@ -116,8 +119,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                        <Text type="secondary" className="text-lg">中心选择进行中...</Text>
-                        <Text type="secondary">中心选择专家正在生成候选池并进行筛选...</Text>
+                        <Text type="secondary" className="text-lg">{t('siteSelectionWorkflow')} {t('inProgressStatus')}</Text>
+                        <Text type="secondary">{language === 'zh' ? '中心选择专家正在生成候选池并筛选...' : 'Center selection experts are generating candidate pools and screening...'}</Text>
                     </div>
                 )
             } else if (stepStatus === 'completed' || hasAddedRegion || siteSelectionSubStatus !== 'idle') {
@@ -134,7 +137,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
             } else {
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Text type="secondary" className="text-lg">等待开始中心选定...</Text>
+                        <Text type="secondary" className="text-lg">{t('waitingToStart')} {t('siteSelectionWorkflow').toLowerCase()}...</Text>
                     </div>
                 )
             }
@@ -146,8 +149,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                        <Text type="secondary" className="text-lg">合规风控进行中...</Text>
-                        <Text type="secondary">正在全面分析相关法规与伦理要求...</Text>
+                        <Text type="secondary" className="text-lg">{t('complianceRiskControl')} {t('inProgressStatus')}</Text>
+                        <Text type="secondary">{language === 'zh' ? '正在全面分析相关法规与伦理要求...' : 'Comprehensively analyzing related regulations and ethical requirements...'}</Text>
                     </div>
                 )
             } else if (stepStatus === 'completed') {
@@ -155,7 +158,7 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
             } else {
                 return (
                     <div className="flex flex-col items-center justify-center h-full space-y-4">
-                        <Text type="secondary" className="text-lg">等待开始合规风控...</Text>
+                        <Text type="secondary" className="text-lg">{t('waitingToStart')} {t('complianceRiskControl').toLowerCase()}...</Text>
                     </div>
                 )
             }
@@ -168,8 +171,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                     return (
                         <div className="flex flex-col items-center justify-center h-full space-y-4">
                             <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                            <Text type="secondary" className="text-lg">方案撰写进行中...</Text>
-                            <Text type="secondary">正在整合分析结果，进行结构化撰写与一致性检查...</Text>
+                            <Text type="secondary" className="text-lg">{t('proposalWriting')} {t('inProgressStatus')}</Text>
+                            <Text type="secondary">{language === 'zh' ? '正在整合分析结果，进行结构化撰写与一致性检查...' : 'Integrating analysis results, conducting structured drafting and consistency checks...'}</Text>
                         </div>
                     )
                 }
@@ -179,8 +182,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                     return (
                         <div className="flex flex-col items-center justify-center h-full space-y-4">
                             <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                            <Text type="secondary" className="text-lg">协同评审进行中...</Text>
-                            <Text type="secondary">各领域专家正在对方案进行交叉复核与意见收敛...</Text>
+                            <Text type="secondary" className="text-lg">{t('collaborativeReview')} {t('inProgressStatus')}</Text>
+                            <Text type="secondary">{language === 'zh' ? '多方专家正在进行交叉评审与意见收敛...' : 'Experts from various fields are cross-reviewing and converging opinions...'}</Text>
                         </div>
                     )
                 }
@@ -190,8 +193,8 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                     return (
                         <div className="flex flex-col items-center justify-center h-full space-y-4">
                             <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                            <Text type="secondary" className="text-lg">交付生成进行中...</Text>
-                            <Text type="secondary">正在打包交付物并生成最终报告...</Text>
+                            <Text type="secondary" className="text-lg">{t('deliveryArchiving')} {t('inProgressStatus')}</Text>
+                            <Text type="secondary">{language === 'zh' ? '正在打包交付物并生成最终报告...' : 'Packaging deliverables and generating final report...'}</Text>
                         </div>
                     )
                 }
@@ -251,17 +254,17 @@ const WorkflowView: React.FC<WorkflowViewProps> = ({
                     <div className="flex space-x-2">
                         {activeStep === 0 && (
                             <Button icon={<ArrowLeftOutlined />} onClick={onBackToList}>
-                                返回列表
+                                {t('backToList')}
                             </Button>
                         )}
                         {activeStep < stepsData.length - 1 && stepStatus === 'completed' && (
                             <Button type="primary" icon={<ArrowRightOutlined />} onClick={onNextStep}>
-                                下一步
+                                {t('next')}
                             </Button>
                         )}
                         {activeStep === stepsData.length - 1 && stepStatus === 'completed' && (
                             <Button type="primary" onClick={onBackToList}>
-                                完成
+                                {t('finish')}
                             </Button>
                         )}
                     </div>
