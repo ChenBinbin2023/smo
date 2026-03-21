@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
     Card,
     Input,
@@ -17,8 +17,7 @@ import {
     Tooltip,
     Empty,
     Drawer,
-    Descriptions,
-    Segmented
+    Descriptions
 } from 'antd'
 import {
     SendOutlined,
@@ -26,13 +25,14 @@ import {
     UserOutlined,
     InfoCircleOutlined,
     CheckCircleFilled,
-    WarningOutlined,
     SecurityScanOutlined,
     LineChartOutlined,
     DeploymentUnitOutlined,
     HistoryOutlined,
     FileSearchOutlined,
-    ExperimentOutlined
+    ExperimentOutlined,
+    DownOutlined,
+    RightOutlined
 } from '@ant-design/icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useScheme } from '../context/SchemeContext'
@@ -50,19 +50,213 @@ const { TextArea } = Input
 interface Message {
     role: 'user' | 'assistant';
     content: string;
+    type?: 'text' | 'thinking' | 'execution' | 'result';
+    thinkingSteps?: string[];
+    executionSections?: { title: string; items: string[] }[];
+}
+
+interface StreamingDisclosureProps {
+    title: string;
+    details: string;
+}
+
+const THINKING_STEPS: Record<'zh' | 'en', string[]> = {
+    zh: [
+        '解析疾病领域、试验阶段与药物机制，确认筛选主目标。',
+        '提取区域限制与医院等级要求，缩小候选中心范围。',
+        '匹配既往 PD-1 试验经验、研究者能力与历史入组表现。',
+        '综合入组效率、合规风险与区域覆盖，输出推荐中心列表。'
+    ],
+    en: [
+        'Parse the disease area, trial phase, and drug mechanism to confirm the screening goal.',
+        'Apply region and hospital-tier constraints to narrow the candidate pool.',
+        'Match prior PD-1 trial experience, investigator capability, and historical enrollment performance.',
+        'Combine enrollment efficiency, compliance risk, and regional coverage into a ranked recommendation list.'
+    ]
+}
+
+const EXECUTION_SECTIONS: Record<'zh' | 'en', { title: string; items: string[] }[]> = {
+    zh: [
+        {
+            title: '本体调用',
+            items: [
+                '挂载对象：临床试验 (clinical_trial)',
+                '查询目标：研究中心 (institution)',
+                '动作类型：recommend_sites / 推荐研究中心'
+            ]
+        },
+        {
+            title: '逻辑编排',
+            items: [
+                '执行模式：logic',
+                '筛选逻辑：filter_score_rank',
+                '按对象关联知识完成筛选、评分与排序'
+            ]
+        },
+        {
+            title: '执行约束',
+            items: [
+                '已按规则组合执行中心推荐逻辑',
+                '执行过程保持在权限与校验围栏内',
+                '结果中保留高匹配中心与合规关注点供进一步判断'
+            ]
+        }
+    ],
+    en: [
+        {
+            title: 'Ontology Call',
+            items: [
+                'Mounted object: clinical_trial (Clinical Trial)',
+                'Query target: institution (Research Site)',
+                'Action type: recommend_sites / Recommend Research Sites'
+            ]
+        },
+        {
+            title: 'Logic Pipeline',
+            items: [
+                'Execution mode: logic',
+                'Logic type: filter_score_rank',
+                'Use ontology-linked knowledge to filter, score, and rank sites'
+            ]
+        },
+        {
+            title: 'Execution Guardrails',
+            items: [
+                'The recommendation pipeline is executed through the configured rule set',
+                'The run stays within permission and validation guardrails',
+                'The output keeps both top matches and compliance-watch sites for review'
+            ]
+        }
+    ]
+}
+
+function buildRecommendationReply(input: string, language: 'zh' | 'en', resultCount: number): string {
+    const normalizedInput = input.toLowerCase()
+    const isPd1EastChinaQuery = normalizedInput.includes('pd-1')
+        && (input.includes('华东') || normalizedInput.includes('east china'))
+
+    if (language === 'zh') {
+        if (isPd1EastChinaQuery) {
+            return `执行完成：已基于“临床试验 (clinical_trial)”本体对象与 filter_score_rank 逻辑完成中心推荐。结果优先呈现华东地区 PD-1 经验中心，同时保留北京肿瘤医院、浙江省肿瘤医院等存在合规关注点的机构供继续判断。`
+        }
+
+        return `执行完成：已基于临床试验本体对象与 filter_score_rank 逻辑完成候选中心排序，当前返回 ${resultCount} 家推荐中心，并保留需重点关注的合规机构。`
+    }
+
+    if (isPd1EastChinaQuery) {
+        return 'Execution completed: the clinical_trial ontology object and filter_score_rank logic have produced the recommendation set. East China PD-1-experienced sites are highlighted, while compliance-watch institutions such as Beijing Cancer Hospital and Zhejiang Cancer Hospital remain visible for review.'
+    }
+
+    return `Execution completed: candidate sites have been ranked through the clinical_trial ontology object and filter_score_rank logic. ${resultCount} sites are ready for review, including institutions that need additional compliance attention.`
+}
+
+function buildThinkingDetailText(steps: string[]): string {
+    return steps.map((step, index) => `${index + 1}. ${step}`).join('\n')
+}
+
+function buildExecutionDetailText(sections: { title: string; items: string[] }[]): string {
+    return sections
+        .map((section) => [section.title, ...section.items.map((item) => `- ${item}`)].join('\n'))
+        .join('\n\n')
+}
+
+const StreamingDisclosure: React.FC<StreamingDisclosureProps> = ({ title, details }) => {
+    const [visibleLength, setVisibleLength] = useState(0)
+    const [isExpanded, setIsExpanded] = useState(true)
+    const [isStreamFinished, setIsStreamFinished] = useState(false)
+
+    useEffect(() => {
+        let frameTimer: number | undefined
+        let collapseTimer: number | undefined
+
+        setVisibleLength(0)
+        setIsExpanded(true)
+        setIsStreamFinished(false)
+
+        frameTimer = window.setInterval(() => {
+            setVisibleLength((current) => {
+                const next = Math.min(current + 3, details.length)
+
+                if (next >= details.length) {
+                    if (frameTimer) {
+                        window.clearInterval(frameTimer)
+                    }
+                    setIsStreamFinished(true)
+                    collapseTimer = window.setTimeout(() => {
+                        setIsExpanded(false)
+                    }, 500)
+                }
+
+                return next
+            })
+        }, 18)
+
+        return () => {
+            if (frameTimer) {
+                window.clearInterval(frameTimer)
+            }
+            if (collapseTimer) {
+                window.clearTimeout(collapseTimer)
+            }
+        }
+    }, [details])
+
+    return (
+        <div className="space-y-2">
+            <button
+                type="button"
+                onClick={() => setIsExpanded((current) => !current)}
+                className="flex w-full items-center gap-2 rounded-md bg-transparent px-0 py-0 text-left"
+                style={{
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    color: '#262626'
+                }}
+            >
+                {isExpanded ? <DownOutlined style={{ color: '#262626', fontSize: 12 }} /> : <RightOutlined style={{ color: '#262626', fontSize: 12 }} />}
+                <Text style={{ color: '#262626', fontSize: 14, lineHeight: 1.7 }}>{title}</Text>
+            </button>
+
+            {isExpanded ? (
+                <div
+                    className="rounded-lg px-3 py-3"
+                    style={{
+                        background: '#f5f5f5'
+                    }}
+                >
+                    <div style={{ whiteSpace: 'pre-wrap', color: '#262626', fontSize: 14, lineHeight: 1.7 }}>
+                        {details.slice(0, visibleLength)}
+                    </div>
+                </div>
+            ) : !isStreamFinished ? (
+                <div
+                    className="rounded-lg px-3 py-2"
+                    style={{
+                        background: '#f5f5f5'
+                    }}
+                >
+                    <Text style={{ color: '#262626', fontSize: 14, lineHeight: 1.7 }}>
+                        {details.slice(0, visibleLength)}
+                    </Text>
+                </div>
+            ) : null}
+        </div>
+    )
 }
 
 const IntelligentSelection: React.FC = () => {
     const { t, language } = useLanguage()
-    const { currentStep, setCurrentStep, currentScheme, allInstitutions } = useScheme()
+    const { currentStep, setCurrentStep, allInstitutions } = useScheme()
     const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: t('aiSelectionAssistantGreeting') }
     ])
     const [inputValue, setInputValue] = useState('')
-    const [showResults, setShowResults] = useState(false)
+    const [isResponding, setIsResponding] = useState(false)
     const [selectedCenters, setSelectedCenters] = useState<string[]>([])
     const [portraitVisible, setPortraitVisible] = useState(false)
     const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | null>(null)
+    const responseTimersRef = useRef<number[]>([])
 
     // Mock Requirements Data
     const mockRequirements = [
@@ -103,6 +297,18 @@ const IntelligentSelection: React.FC = () => {
 
     const [selectedRequirementId, setSelectedRequirementId] = useState<string>(mockRequirements[0].id)
     const selectedRequirement = mockRequirements.find(r => r.id === selectedRequirementId)
+
+    useEffect(() => {
+        return () => {
+            responseTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+        }
+    }, [])
+
+    const cancelPendingResponse = () => {
+        responseTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+        responseTimersRef.current = []
+        setIsResponding(false)
+    }
 
     const mockRecommendations = [
         {
@@ -183,31 +389,88 @@ const IntelligentSelection: React.FC = () => {
         }
     ]
 
+    const displayedRecommendations = mockRecommendations
+    const thinkingDetailText = buildThinkingDetailText(THINKING_STEPS[language])
+    const executionDetailText = buildExecutionDetailText(EXECUTION_SECTIONS[language])
+
+    const regionalCoverage = displayedRecommendations.reduce<Record<string, number>>((acc, item) => {
+        acc[item.region] = (acc[item.region] || 0) + 1
+        return acc
+    }, {})
+
+    const regionalCoverageItems = Object.entries(regionalCoverage)
+        .sort((a, b) => b[1] - a[1])
+        .map(([region, count]) => ({
+            region,
+            count,
+            percent: displayedRecommendations.length ? Math.round((count / displayedRecommendations.length) * 100) : 0
+        }))
+
     const handleSendMessage = () => {
-        if (!inputValue) return
-        const newMessages: Message[] = [...messages, { role: 'user', content: inputValue }]
+        const trimmedInput = inputValue.trim()
+        if (!trimmedInput || isResponding) return
+
+        cancelPendingResponse()
+        const nextRecommendations = mockRecommendations
+
+        const newMessages: Message[] = [...messages, { role: 'user', content: trimmedInput }]
         setMessages(newMessages)
         setInputValue('')
+        setIsResponding(true)
+        setSelectedCenters([])
 
-        setTimeout(() => {
-            const aiResponse = language === 'zh'
-                ? `已识别需求：找华东地区做过PD-1试验、入组速率高于3人/月的三甲医院。正在检索...`
-                : `Identified requirement: Find Grade A tertiary hospitals in East China with PD-1 trial experience and enrollment rate > 3/month. Searching...`;
+        const thinkingMessage: Message = {
+            role: 'assistant',
+            type: 'thinking',
+            content: language === 'zh' ? '思考过程' : 'Thinking Process',
+            thinkingSteps: THINKING_STEPS[language]
+        }
 
-            setMessages([...newMessages, {
-                role: 'assistant',
-                content: aiResponse
-            }])
-            setTimeout(() => {
-                setShowResults(true)
-                setCurrentStep('recommendation')
-            }, 1000)
-        }, 800)
+        const executionMessage: Message = {
+            role: 'assistant',
+            type: 'execution',
+            content: language === 'zh' ? '通过本体建模检索相关知识，并在规则围栏内完成中心推荐执行本体调用' : 'Retrieve ontology-linked knowledge and complete ontology-driven site recommendation execution within guardrails',
+            executionSections: EXECUTION_SECTIONS[language]
+        }
+
+        const resultMessage: Message = {
+            role: 'assistant',
+            type: 'result',
+            content: buildRecommendationReply(trimmedInput, language, nextRecommendations.length)
+        }
+
+        const thinkingTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, thinkingMessage])
+        }, 350)
+
+        const executionTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, executionMessage])
+        }, 1350)
+
+        const resultTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, resultMessage])
+        }, 2550)
+
+        const transitionTimer = window.setTimeout(() => {
+            setCurrentStep('recommendation')
+            responseTimersRef.current = []
+            setIsResponding(false)
+        }, 3250)
+
+        responseTimersRef.current = [thinkingTimer, executionTimer, resultTimer, transitionTimer]
     }
 
-    const handleStepChange = (step: string) => {
-        if (step === 'recommendation') setShowResults(true)
+    const handleStepChange = () => {
+        if (isResponding) {
+            cancelPendingResponse()
+        }
     }
+
+    useEffect(() => {
+        if (isResponding && currentStep !== 'requirement') {
+            cancelPendingResponse()
+        }
+    }, [currentStep, isResponding])
 
     const showInstitutionPortrait = (id: string) => {
         setSelectedInstitutionId(id)
@@ -270,7 +533,26 @@ const IntelligentSelection: React.FC = () => {
                                 size="small"
                             />
                             <div className={`p-3 rounded-lg text-sm ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                                <Text style={{ color: msg.role === 'user' ? 'white' : 'inherit' }}>{msg.content}</Text>
+                                {msg.type === 'thinking' ? (
+                                    <StreamingDisclosure
+                                        title={msg.content}
+                                        details={thinkingDetailText}
+                                    />
+                                ) : msg.type === 'execution' ? (
+                                    <StreamingDisclosure
+                                        title={msg.content}
+                                        details={executionDetailText}
+                                    />
+                                ) : msg.type === 'result' ? (
+                                    <div className="space-y-3">
+                                        <Text style={{ color: '#262626', fontSize: 14, lineHeight: 1.7 }}>{language === 'zh' ? '结果输出' : 'Result'}</Text>
+                                        <div className="rounded-lg px-3 py-2" style={{ background: '#f5f5f5' }}>
+                                            <Text style={{ color: '#262626', fontSize: 14, lineHeight: 1.7 }}>{msg.content}</Text>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Text style={{ color: msg.role === 'user' ? 'white' : '#262626', fontSize: 14, lineHeight: 1.7 }}>{msg.content}</Text>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -283,6 +565,7 @@ const IntelligentSelection: React.FC = () => {
                         onChange={e => setInputValue(e.target.value)}
                         placeholder={t('selectionRequirementPlaceholder')}
                         autoSize={{ minRows: 1, maxRows: 4 }}
+                        disabled={isResponding}
                         onPressEnter={e => {
                             if (!e.shiftKey) {
                                 e.preventDefault()
@@ -291,7 +574,7 @@ const IntelligentSelection: React.FC = () => {
                         }}
                         className="rounded-lg"
                     />
-                    <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} className="rounded-lg h-auto" />
+                    <Button type="primary" icon={<SendOutlined />} onClick={handleSendMessage} loading={isResponding} className="rounded-lg h-auto" />
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                     <Tag className="cursor-pointer hover:bg-gray-100" onClick={() => setInputValue(language === 'zh' ? '找华东地区做过 PD-1 试验的三甲医院' : 'Looking for Grade A tertiary hospitals in East China with PD-1 experience')}>{language === 'zh' ? 'PD-1 经验机构' : 'PD-1 Experience'}</Tag>
@@ -386,13 +669,13 @@ const IntelligentSelection: React.FC = () => {
                             <Space>
                                 <Tag color="blue" icon={<CheckCircleFilled />}>{language === 'zh' ? '匹配度 > 85%' : 'Match > 85%'}</Tag>
                                 <Tag color="green" icon={<SecurityScanOutlined />}>{language === 'zh' ? '风险管控中' : 'Risk under control'}</Tag>
-                                <Text type="secondary">{t('foundCentersPrefix')}{mockRecommendations.length}{t('foundCentersSuffix')}</Text>
+                                <Text type="secondary">{t('foundCentersPrefix')}{displayedRecommendations.length}{t('foundCentersSuffix')}</Text>
                             </Space>
                             <Button type="dashed" icon={<DeploymentUnitOutlined />}>{t('manualAddInstitution')}</Button>
                         </Row>
                         <Table
                             columns={columns}
-                            dataSource={mockRecommendations}
+                            dataSource={displayedRecommendations}
                             rowKey="id"
                             rowSelection={{
                                 selectedRowKeys: selectedCenters,
@@ -408,16 +691,21 @@ const IntelligentSelection: React.FC = () => {
                                 <Row gutter={16} align="middle">
                                     <Col span={10}>
                                         <div className="text-center">
-                                            <div className="text-3xl font-bold text-blue-600">85%</div>
-                                            <div className="text-xs text-gray-400">{t('coreCoverage')} ({language === 'zh' ? '华东区' : 'East China'})</div>
+                                            <div className="text-3xl font-bold text-blue-600">{regionalCoverageItems[0]?.percent ?? 0}%</div>
+                                            <div className="text-xs text-gray-400">{t('coreCoverage')} ({regionalCoverageItems[0]?.region ?? (language === 'zh' ? '未分配' : 'Unassigned')})</div>
                                         </div>
                                     </Col>
                                     <Col span={14}>
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-xs"><span>{language === 'zh' ? '华东 (4)' : 'East China (4)'}</span><span>100%</span></div>
-                                            <Progress percent={100} size="small" showInfo={false} />
-                                            <div className="flex justify-between text-xs"><span>{language === 'zh' ? '华北 (2)' : 'North China (2)'}</span><span>75%</span></div>
-                                            <Progress percent={75} size="small" showInfo={false} status="active" />
+                                            {regionalCoverageItems.map((item) => (
+                                                <div key={item.region} className="space-y-1">
+                                                    <div className="flex justify-between text-xs">
+                                                        <span>{item.region} ({item.count})</span>
+                                                        <span>{item.percent}%</span>
+                                                    </div>
+                                                    <Progress percent={item.percent} size="small" showInfo={false} status={item.percent === 100 ? 'normal' : 'active'} />
+                                                </div>
+                                            ))}
                                         </div>
                                     </Col>
                                 </Row>

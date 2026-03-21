@@ -3,13 +3,9 @@ import { Layout, Menu, theme, Button, Space, Avatar, Badge, Tooltip, Switch } fr
 import {
     SearchOutlined,
     CompassOutlined,
-    BarChartOutlined,
-    HistoryOutlined,
-    SettingOutlined,
     UserOutlined,
     BellOutlined,
     MessageOutlined,
-    ContainerOutlined,
     AppstoreOutlined,
     BulbOutlined,
     AuditOutlined,
@@ -37,8 +33,6 @@ const AppContent = () => {
         { key: 'selection', icon: <SearchOutlined />, label: t('siteSelection') },
         { key: 'regulation', icon: <AuditOutlined />, label: t('regulatoryReview') },
         { key: 'plan', icon: <DeploymentUnitOutlined />, label: t('planCenter') },
-        { key: 'history', icon: <HistoryOutlined />, label: t('history') },
-        { key: 'settings', icon: <SettingOutlined />, label: t('settings') },
     ]
 
     const renderContent = () => {
