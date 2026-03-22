@@ -96,9 +96,9 @@ const EXECUTION_SECTIONS: Record<'zh' | 'en', { title: string; items: string[] }
         {
             title: '执行约束',
             items: [
-                '已按规则组合执行中心推荐逻辑',
-                '执行过程保持在权限与校验围栏内',
-                '结果中保留高匹配中心与合规关注点供进一步判断'
+                '筛选：备案状态=已备案；历史试验数>=10；中心区域属于“华东”',
+                '评分：近似试验数*0.4 + 平均入组速率*0.4 + 总试验经验*0.2',
+                '排序：按综合评分降序，返回 top 3 候选中心'
             ]
         }
     ],
@@ -122,9 +122,9 @@ const EXECUTION_SECTIONS: Record<'zh' | 'en', { title: string; items: string[] }
         {
             title: 'Execution Guardrails',
             items: [
-                'The recommendation pipeline is executed through the configured rule set',
-                'The run stays within permission and validation guardrails',
-                'The output keeps both top matches and compliance-watch sites for review'
+                'Filter: filing status = filed; historical trial count >= 10; region belongs to East China',
+                'Score: similar trial count * 0.4 + average enrollment rate * 0.4 + total trial experience * 0.2',
+                'Rank: sort by composite score descending and return the top 3 candidate sites'
             ]
         }
     ]
