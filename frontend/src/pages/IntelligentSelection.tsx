@@ -50,9 +50,16 @@ const { TextArea } = Input
 interface Message {
     role: 'user' | 'assistant';
     content: string;
-    type?: 'text' | 'thinking' | 'execution' | 'result';
+    type?: 'text' | 'thinking' | 'security_check' | 'auth_request' | 'auth_result' | 'execution' | 'result';
+    details?: string;
     thinkingSteps?: string[];
     executionSections?: { title: string; items: string[] }[];
+}
+
+interface AuthorizationCardProps {
+    authState: 'pending' | 'granted' | 'denied' | null;
+    onGrant: () => void;
+    onDeny: () => void;
 }
 
 interface StreamingDisclosureProps {
@@ -160,6 +167,60 @@ function buildExecutionDetailText(sections: { title: string; items: string[] }[]
         .join('\n\n')
 }
 
+// --- PD-1 华东 flow script constants ---
+const PD1_FLOW_THINKING_ZH = `识别任务类型：中心选择
+提取关键参数：
+  · 项目编号：TRIAL-2026-001
+  · 目标入组：120人
+  · 目标区域：华东
+判断：需要读取 Trial 本体获取完整方案参数
+判断：TRIAL_MASTER 包含 L3 级字段 → 触发权限前置校验`
+
+const PD1_FLOW_SECURITY_ZH = `调用工具：权限校验 (check_access_permission)
+  · 目标数据：TRIAL_MASTER（Trial 本体实例）
+  · 检测级别：L3（含适应症、入排标准、目标入组数等加密字段）
+  · 依据：《数据分级分类方案》FR-6`
+
+const PD1_FLOW_AUTH_RESULT_ZH = `· 角色核验：CRA ✔ 具备 L3 读取权限（RBAC规则匹配）
+· 审计日志：#AUD-20260325-0051 已写入
+✅ 授权通过，继续执行`
+
+const AuthorizationCard: React.FC<AuthorizationCardProps> = ({ authState, onGrant, onDeny }) => {
+    const isPending = authState === 'pending'
+    return (
+        <div style={{ border: '1px solid #ffd591', borderRadius: 8, background: '#fffbe6', padding: '12px 14px', marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                <SecurityScanOutlined style={{ color: '#fa8c16', fontSize: 14 }} />
+                <Text style={{ color: '#fa8c16', fontWeight: 600, fontSize: 13 }}>授权请求</Text>
+            </div>
+            <Text style={{ color: '#595959', fontSize: 13, lineHeight: 1.8, display: 'block', marginBottom: 12 }}>
+                本次查询涉及「TRIAL-2026-001 试验主数据（TRIAL_MASTER）」中的 L3 级加密字段，包含适应症、入排标准、目标入组数等敏感信息。
+                <br />
+                依据《数据分级分类方案》安全策略（FR-6），请确认是否授权本次访问。
+            </Text>
+            <Space>
+                <Button
+                    size="small"
+                    type="primary"
+                    style={authState === 'granted' ? { background: '#52c41a', borderColor: '#52c41a' } : {}}
+                    disabled={!isPending}
+                    onClick={onGrant}
+                >
+                    {authState === 'granted' ? '✔ 已授权' : '✔ 授权访问'}
+                </Button>
+                <Button
+                    size="small"
+                    danger
+                    disabled={!isPending}
+                    onClick={onDeny}
+                >
+                    {authState === 'denied' ? '✕ 已拒绝' : '✕ 拒绝'}
+                </Button>
+            </Space>
+        </div>
+    )
+}
+
 const StreamingDisclosure: React.FC<StreamingDisclosureProps> = ({ title, details }) => {
     const [visibleLength, setVisibleLength] = useState(0)
     const [isExpanded, setIsExpanded] = useState(true)
@@ -256,7 +317,10 @@ const IntelligentSelection: React.FC = () => {
     const [selectedCenters, setSelectedCenters] = useState<string[]>([])
     const [portraitVisible, setPortraitVisible] = useState(false)
     const [selectedInstitutionId, setSelectedInstitutionId] = useState<string | null>(null)
+    const [authState, setAuthState] = useState<'pending' | 'granted' | 'denied' | null>(null)
     const responseTimersRef = useRef<number[]>([])
+    const afterAuthTimersRef = useRef<number[]>([])
+    const chatEndRef = useRef<HTMLDivElement>(null)
 
     // Mock Requirements Data
     const mockRequirements = [
@@ -301,13 +365,21 @@ const IntelligentSelection: React.FC = () => {
     useEffect(() => {
         return () => {
             responseTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+            afterAuthTimersRef.current.forEach((timer) => window.clearTimeout(timer))
         }
     }, [])
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [messages])
 
     const cancelPendingResponse = () => {
         responseTimersRef.current.forEach((timer) => window.clearTimeout(timer))
         responseTimersRef.current = []
+        afterAuthTimersRef.current.forEach((timer) => window.clearTimeout(timer))
+        afterAuthTimersRef.current = []
         setIsResponding(false)
+        setAuthState(null)
     }
 
     const mockRecommendations = [
@@ -406,58 +478,146 @@ const IntelligentSelection: React.FC = () => {
             percent: displayedRecommendations.length ? Math.round((count / displayedRecommendations.length) * 100) : 0
         }))
 
+    const handleAuthGrant = () => {
+        setAuthState('granted')
+        afterAuthTimersRef.current.forEach((t) => window.clearTimeout(t))
+
+        const authResultTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, {
+                role: 'assistant' as const,
+                type: 'auth_result' as const,
+                content: '授权验证结果',
+                details: PD1_FLOW_AUTH_RESULT_ZH
+            }])
+        }, 500)
+
+        const executionTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, {
+                role: 'assistant' as const,
+                type: 'execution' as const,
+                content: '调用工具：Trial 本体调用',
+                details: buildExecutionDetailText(EXECUTION_SECTIONS['zh'])
+            }])
+        }, 1900)
+
+        const resultTimer = window.setTimeout(() => {
+            setMessages((prev) => [...prev, {
+                role: 'assistant' as const,
+                type: 'result' as const,
+                content: buildRecommendationReply('pd-1 华东', 'zh', mockRecommendations.length)
+            }])
+        }, 3600)
+
+        const transitionTimer = window.setTimeout(() => {
+            setCurrentStep('recommendation')
+            afterAuthTimersRef.current = []
+            setIsResponding(false)
+        }, 4400)
+
+        afterAuthTimersRef.current = [authResultTimer, executionTimer, resultTimer, transitionTimer]
+    }
+
+    const handleAuthDeny = () => {
+        setAuthState('denied')
+        responseTimersRef.current = []
+        setMessages((prev) => [...prev, {
+            role: 'assistant' as const,
+            type: 'result' as const,
+            content: '访问已被拒绝，操作终止。如需继续，请重新发送请求并授权访问。'
+        }])
+        setIsResponding(false)
+    }
+
     const handleSendMessage = () => {
         const trimmedInput = inputValue.trim()
         if (!trimmedInput || isResponding) return
 
         cancelPendingResponse()
-        const nextRecommendations = mockRecommendations
 
         const newMessages: Message[] = [...messages, { role: 'user', content: trimmedInput }]
         setMessages(newMessages)
         setInputValue('')
         setIsResponding(true)
         setSelectedCenters([])
+        setAuthState(null)
 
-        const thinkingMessage: Message = {
-            role: 'assistant',
-            type: 'thinking',
-            content: language === 'zh' ? '思考过程' : 'Thinking Process',
-            thinkingSteps: THINKING_STEPS[language]
+        const normalizedInput = trimmedInput.toLowerCase()
+        const isPd1EastChina = normalizedInput.includes('pd-1')
+            && (trimmedInput.includes('华东') || normalizedInput.includes('east china'))
+
+        if (isPd1EastChina && language === 'zh') {
+            // New 5-step PD-1 flow with auth
+            const thinkingTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, {
+                    role: 'assistant' as const,
+                    type: 'thinking' as const,
+                    content: '思考中...',
+                    details: PD1_FLOW_THINKING_ZH
+                }])
+            }, 400)
+
+            const securityTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, {
+                    role: 'assistant' as const,
+                    type: 'security_check' as const,
+                    content: '安全前置校验',
+                    details: PD1_FLOW_SECURITY_ZH
+                }])
+            }, 1800)
+
+            const authRequestTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, {
+                    role: 'assistant' as const,
+                    type: 'auth_request' as const,
+                    content: 'auth_request'
+                }])
+                setAuthState('pending')
+            }, 3200)
+
+            responseTimersRef.current = [thinkingTimer, securityTimer, authRequestTimer]
+            // flow continues in handleAuthGrant / handleAuthDeny after user interaction
+        } else {
+            // Original 3-step flow for all other queries
+            const thinkingMessage: Message = {
+                role: 'assistant',
+                type: 'thinking',
+                content: language === 'zh' ? '思考过程' : 'Thinking Process',
+                thinkingSteps: THINKING_STEPS[language]
+            }
+
+            const executionMessage: Message = {
+                role: 'assistant',
+                type: 'execution',
+                content: language === 'zh' ? '通过本体建模检索相关知识，并在规则围栏内完成中心推荐执行本体调用' : 'Retrieve ontology-linked knowledge and complete ontology-driven site recommendation execution within guardrails',
+                executionSections: EXECUTION_SECTIONS[language]
+            }
+
+            const resultMessage: Message = {
+                role: 'assistant',
+                type: 'result',
+                content: buildRecommendationReply(trimmedInput, language, mockRecommendations.length)
+            }
+
+            const thinkingTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, thinkingMessage])
+            }, 350)
+
+            const executionTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, executionMessage])
+            }, 1350)
+
+            const resultTimer = window.setTimeout(() => {
+                setMessages((prev) => [...prev, resultMessage])
+            }, 2550)
+
+            const transitionTimer = window.setTimeout(() => {
+                setCurrentStep('recommendation')
+                responseTimersRef.current = []
+                setIsResponding(false)
+            }, 3250)
+
+            responseTimersRef.current = [thinkingTimer, executionTimer, resultTimer, transitionTimer]
         }
-
-        const executionMessage: Message = {
-            role: 'assistant',
-            type: 'execution',
-            content: language === 'zh' ? '通过本体建模检索相关知识，并在规则围栏内完成中心推荐执行本体调用' : 'Retrieve ontology-linked knowledge and complete ontology-driven site recommendation execution within guardrails',
-            executionSections: EXECUTION_SECTIONS[language]
-        }
-
-        const resultMessage: Message = {
-            role: 'assistant',
-            type: 'result',
-            content: buildRecommendationReply(trimmedInput, language, nextRecommendations.length)
-        }
-
-        const thinkingTimer = window.setTimeout(() => {
-            setMessages((prev) => [...prev, thinkingMessage])
-        }, 350)
-
-        const executionTimer = window.setTimeout(() => {
-            setMessages((prev) => [...prev, executionMessage])
-        }, 1350)
-
-        const resultTimer = window.setTimeout(() => {
-            setMessages((prev) => [...prev, resultMessage])
-        }, 2550)
-
-        const transitionTimer = window.setTimeout(() => {
-            setCurrentStep('recommendation')
-            responseTimersRef.current = []
-            setIsResponding(false)
-        }, 3250)
-
-        responseTimersRef.current = [thinkingTimer, executionTimer, resultTimer, transitionTimer]
     }
 
     const handleStepChange = () => {
@@ -536,12 +696,28 @@ const IntelligentSelection: React.FC = () => {
                                 {msg.type === 'thinking' ? (
                                     <StreamingDisclosure
                                         title={msg.content}
-                                        details={thinkingDetailText}
+                                        details={msg.details ?? thinkingDetailText}
+                                    />
+                                ) : msg.type === 'security_check' ? (
+                                    <StreamingDisclosure
+                                        title={msg.content}
+                                        details={msg.details!}
+                                    />
+                                ) : msg.type === 'auth_request' ? (
+                                    <AuthorizationCard
+                                        authState={authState}
+                                        onGrant={handleAuthGrant}
+                                        onDeny={handleAuthDeny}
+                                    />
+                                ) : msg.type === 'auth_result' ? (
+                                    <StreamingDisclosure
+                                        title={msg.content}
+                                        details={msg.details!}
                                     />
                                 ) : msg.type === 'execution' ? (
                                     <StreamingDisclosure
                                         title={msg.content}
-                                        details={executionDetailText}
+                                        details={msg.details ?? executionDetailText}
                                     />
                                 ) : msg.type === 'result' ? (
                                     <div className="space-y-3">
@@ -557,6 +733,7 @@ const IntelligentSelection: React.FC = () => {
                         </div>
                     </div>
                 ))}
+                <div ref={chatEndRef} />
             </div>
             <div className="mt-auto pt-4 border-t border-gray-100">
                 <div className="flex space-x-2">
