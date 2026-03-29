@@ -24,11 +24,11 @@ export const translations: Record<string, Record<Language, string>> = {
     'globalSearch': { zh: '全局搜索', en: 'Global Search' },
     'notifications': { zh: '消息通知', en: 'Notifications' },
     'help': { zh: '在线帮助', en: 'Help' },
-    'admin': { zh: '管理员', en: 'Admin' },
+    'admin': { zh: 'Alice', en: 'Alice' },
 
     // Home.tsx
     'goodAfternoon': { zh: '下午好', en: 'Good Afternoon' },
-    'welcomeMessage': { zh: '欢迎回到 HAWKEYE 智能决策系统，今天有 2 个新项目需要选址决策。', en: 'Welcome back to the HAWKEYE Decision System. You have 2 new projects requiring site selection today.' },
+    'welcomeMessage': { zh: '欢迎回到速研动力智能决策系统，今天有 2 个新项目需要选址决策。', en: 'Welcome back to 速研动力 Decision System. You have 2 new projects requiring site selection today.' },
     'cumulativeSites': { zh: '累计选址中心', en: 'Cumulative Sites Selected' },
     'avgCycleReduction': { zh: '平均缩短周期', en: 'Avg Cycle Reduction' },
     'ongoingSelections': { zh: '正在进行的选址', en: 'Ongoing Selections' },

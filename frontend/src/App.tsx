@@ -75,7 +75,7 @@ const AppContent = () => {
                     minWidth: 120
                 }}>
                     <AppstoreOutlined style={{ fontSize: 24, color: '#1677ff', marginRight: 12 }} />
-                    <span style={{ fontSize: 20, fontWeight: 700, color: '#1f1f1f' }}>HAWKEYE</span>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#1f1f1f' }}>速研动力</span>
                 </div>
 
                 <Menu
