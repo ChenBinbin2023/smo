@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Layout, Menu, theme, Button, Space, Avatar, Badge, Tooltip, Switch } from 'antd'
+import { Layout, Menu, theme, Button, Space, Avatar, Badge, Tooltip, Switch, Dropdown } from 'antd'
 import {
     SearchOutlined,
     CompassOutlined,
@@ -9,7 +9,8 @@ import {
     AppstoreOutlined,
     BulbOutlined,
     AuditOutlined,
-    DeploymentUnitOutlined
+    DeploymentUnitOutlined,
+    DownOutlined
 } from '@ant-design/icons'
 import Home from './pages/Home'
 import IntelligentSelection from './pages/IntelligentSelection'
@@ -29,11 +30,18 @@ const AppContent = () => {
 
     const menuItems = [
         { key: 'home', icon: <CompassOutlined />, label: t('workbench') },
-        { key: 'query', icon: <BulbOutlined />, label: t('intelligentQuery') },
         { key: 'selection', icon: <SearchOutlined />, label: t('siteSelection') },
+    ]
+
+    const helpMenuItems = [
+        { key: 'query', icon: <BulbOutlined />, label: t('intelligentQuery') },
         { key: 'regulation', icon: <AuditOutlined />, label: t('regulatoryReview') },
         { key: 'plan', icon: <DeploymentUnitOutlined />, label: t('planCenter') },
     ]
+
+    const handleHelpMenuClick = ({ key }: { key: string }) => {
+        setActiveTab(key)
+    }
 
     const renderContent = () => {
         switch (activeTab) {
@@ -101,9 +109,16 @@ const AppContent = () => {
                             <Button type="text" icon={<BellOutlined />} />
                         </Badge>
                     </Tooltip>
-                    <Tooltip title={t('help')}>
-                        <Button type="text" icon={<MessageOutlined />} />
-                    </Tooltip>
+                    <Dropdown
+                        menu={{ items: helpMenuItems, onClick: handleHelpMenuClick }}
+                        placement="bottomRight"
+                    >
+                        <Tooltip title={t('help')}>
+                            <Button type="text" icon={<MessageOutlined />}>
+                                <DownOutlined style={{ fontSize: 10, marginLeft: 2 }} />
+                            </Button>
+                        </Tooltip>
+                    </Dropdown>
                     <div style={{ width: 1, height: 24, background: '#f0f0f0' }} />
                     <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}>
                         <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} size="small" />

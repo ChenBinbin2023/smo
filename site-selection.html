@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中心选择 - 中心推荐 | 速研动力</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05); border-radius: 8px; }
+        .step-active { background: #1677ff; color: white; }
+        .step-completed { background: #52c41a; color: white; }
+        .step-pending { background: #f0f0f0; color: #999; }
+        .progress-bar { background: linear-gradient(90deg, #1677ff 50%, #e8e8e8 50%); }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; }
+        .chat-bubble-user { background: #1677ff; color: white; }
+        .chat-bubble-assistant { background: #f5f5f5; color: #262626; }
+        .tag-blue { background: #e6f4ff; color: #0958d9; border: 1px solid #91caff; }
+        .tag-green { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+        .tag-orange { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-white" style="box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <div class="flex items-center px-6 h-16">
+            <div class="flex items-center mr-12 min-w-[120px]">
+                <svg class="w-6 h-6 mr-3" style="color: #1677ff;" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 4h16v16H4z"/>
+                </svg>
+                <span class="text-xl font-bold text-gray-900">速研动力</span>
+            </div>
+            <nav class="flex-1 flex space-x-1">
+                <a href="#" class="px-4 py-5 text-gray-600 hover:text-blue-600 font-medium text-[15px]">工作台</a>
+                <a href="#" class="px-4 py-5 text-blue-600 font-medium text-[15px] border-b-2 border-blue-600">中心选择</a>
+            </nav>
+            <div class="flex items-center space-x-5">
+                <div class="flex items-center space-x-1 text-sm">
+                    <span class="text-blue-600 font-semibold">中</span>
+                    <div class="w-8 h-4 bg-gray-200 rounded-full relative cursor-pointer">
+                        <div class="w-4 h-4 bg-white rounded-full shadow absolute right-0 top-0"></div>
+                    </div>
+                    <span class="text-gray-500">En</span>
+                </div>
+                <button class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded-lg relative">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="flex items-center space-x-1 p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="w-px h-6 bg-gray-200 mx-2"></div>
+                <div class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                    <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                    <span class="font-medium text-gray-700 text-sm">管理员</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-5" style="height: calc(100vh - 64px);">
+        <div class="flex gap-5 h-full">
+            <!-- Left Side: AI Chat Panel -->
+            <div class="w-[28%] h-full">
+                <div class="glass-card h-full flex flex-col">
+                    <!-- Header -->
+                    <div class="px-4 py-3 border-b border-gray-100 flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="font-semibold text-gray-800">AI 对话交互</span>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div class="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
+                        <!-- AI Welcome Message -->
+                        <div class="flex justify-start">
+                            <div class="flex flex-row max-w-[90%]">
+                                <div class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="chat-bubble-assistant p-3 rounded-lg text-sm leading-relaxed">
+                                    您好！我是您的AI选址助手。请告诉我想寻找什么样的临床试验中心。
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Message -->
+                        <div class="flex justify-end">
+                            <div class="flex flex-row-reverse max-w-[90%]">
+                                <div class="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                </div>
+                                <div class="chat-bubble-user p-3 rounded-lg text-sm leading-relaxed">
+                                    找华东地区做过 PD-1 试验的三甲医院
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Thinking -->
+                        <div class="flex justify-start">
+                            <div class="flex flex-row max-w-[90%]">
+                                <div class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-gray-100 p-3 rounded-lg text-sm w-full">
+                                    <button class="flex items-center gap-2 text-gray-800 font-medium mb-2">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                        思考中...
+                                    </button>
+                                    <div class="bg-[#f5f5f5] rounded-lg px-3 py-2 text-gray-700 text-sm leading-relaxed space-y-1">
+                                        <p>1. 解析疾病领域、试验阶段与药物机制，确认筛选主目标。</p>
+                                        <p>2. 提取区域限制与医院等级要求，缩小候选中心范围。</p>
+                                        <p>3. 匹配既往 PD-1 试验经验、研究者能力与历史入组表现。</p>
+                                        <p>4. 综合入组效率、合规风险与区域覆盖，输出推荐中心列表。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Execution -->
+                        <div class="flex justify-start">
+                            <div class="flex flex-row max-w-[90%]">
+                                <div class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-gray-100 p-3 rounded-lg text-sm w-full">
+                                    <button class="flex items-center gap-2 text-gray-800 font-medium mb-2">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                        调用工具：Trial 本体调用
+                                    </button>
+                                    <div class="bg-[#f5f5f5] rounded-lg px-3 py-2 text-gray-700 text-sm leading-relaxed space-y-4">
+                                        <div>
+                                            <p class="font-semibold mb-1">本体调用</p>
+                                            <ul class="space-y-0.5 text-gray-600">
+                                                <li>- 挂载对象：临床试验 (clinical_trial)</li>
+                                                <li>- 查询目标：研究中心 (institution)</li>
+                                                <li>- 动作类型：recommend_sites / 推荐研究中心</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold mb-1">逻辑编排</p>
+                                            <ul class="space-y-0.5 text-gray-600">
+                                                <li>- 执行模式：logic</li>
+                                                <li>- 筛选逻辑：filter_score_rank</li>
+                                                <li>- 按对象关联知识完成筛选、评分与排序</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold mb-1">执行约束</p>
+                                            <ul class="space-y-0.5 text-gray-600">
+                                                <li>- 筛选：备案状态=已备案；历史试验数>=10；中心区域属于"华东"</li>
+                                                <li>- 评分：近似试验数*0.4 + 平均入组速率*0.4 + 总试验经验*0.2</li>
+                                                <li>- 排序：按综合评分降序，返回 top 3 候选中心</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Result -->
+                        <div class="flex justify-start">
+                            <div class="flex flex-row max-w-[90%]">
+                                <div class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-gray-100 p-3 rounded-lg text-sm w-full">
+                                    <p class="text-gray-800 font-medium mb-2">结果输出</p>
+                                    <div class="bg-[#f5f5f5] rounded-lg px-3 py-2 text-gray-700 text-sm leading-relaxed">
+                                        执行完成：已基于"临床试验 (clinical_trial)"本体对象与 filter_score_rank 逻辑完成中心推荐。结果优先呈现华东地区 PD-1 经验中心，同时保留北京肿瘤医院、浙江省肿瘤医院等存在合规关注点的机构供继续判断。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-3 border-t border-gray-100">
+                        <div class="flex space-x-2">
+                            <textarea placeholder="描述您的选址需求..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-blue-500" rows="1"></textarea>
+                            <button class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs text-gray-600 cursor-pointer transition-colors">PD-1 经验机构</span>
+                            <span class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs text-gray-600 cursor-pointer transition-colors">其它</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Main Content -->
+            <div class="flex-1 h-full flex flex-col space-y-4">
+                <!-- Scheme Selector Bar -->
+                <div class="glass-card py-2 px-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-sm font-medium text-gray-700">NSCLC-PD1-III-选址方案-v1</span>
+                                <span class="px-1.5 py-0.5 bg-blue-100 text-blue-600 text-xs rounded">草稿</span>
+                                <svg class="w-4 h-4 text-gray-400 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                            <button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                            <button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2 text-sm">
+                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span class="text-gray-600">选址策略：肿瘤标准 v2</span>
+                            </div>
+                            <button class="flex items-center space-x-1 text-gray-600 hover:text-blue-600 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>策略日志</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Navigation -->
+                <div class="glass-card py-4 px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 flex-1">
+                            <!-- Step 1 - Completed -->
+                            <div class="flex items-center">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-2">
+                                        <p class="text-sm font-medium text-gray-800">需求定义</p>
+                                        <p class="text-xs text-gray-400">CUI 解析需求</p>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-0.5 bg-blue-600 mx-3"></div>
+                            </div>
+
+                            <!-- Step 2 - Active -->
+                            <div class="flex items-center">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">2</div>
+                                    <div class="ml-2">
+                                        <p class="text-sm font-medium text-gray-800">中心推荐</p>
+                                        <p class="text-xs text-gray-400">指标识别与画像</p>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-0.5 bg-gray-200 mx-3"></div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="flex items-center">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">3</div>
+                                    <div class="ml-2">
+                                        <p class="text-sm font-medium text-gray-400">中心对比</p>
+                                        <p class="text-xs text-gray-400">多维度对标分析</p>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-0.5 bg-gray-200 mx-3"></div>
+                            </div>
+
+                            <!-- Step 4 -->
+                            <div class="flex items-center">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">4</div>
+                                    <div class="ml-2">
+                                        <p class="text-sm font-medium text-gray-400">合规检查</p>
+                                        <p class="text-xs text-gray-400">资质合规与风险</p>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-0.5 bg-gray-200 mx-3"></div>
+                            </div>
+
+                            <!-- Step 5 -->
+                            <div class="flex items-center">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">5</div>
+                                    <div class="ml-2">
+                                        <p class="text-sm font-medium text-gray-400">模拟行动</p>
+                                        <p class="text-xs text-gray-400">预测模拟与预案</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3 ml-4">
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-lg border border-blue-200">中心推荐</span>
+                            <span class="text-sm text-gray-500">第 2 / 5 步</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1 overflow-y-auto scrollbar-thin pr-1 space-y-4">
+                    <!-- AI Recommended Centers Table -->
+                    <div class="glass-card">
+                        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-800 text-base">AI 推荐中心列表</h3>
+                            <div class="flex items-center space-x-3">
+                                <button class="flex items-center space-x-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <span>导出分析报告</span>
+                                </button>
+                                <button class="flex items-center space-x-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-400 cursor-not-allowed" disabled>
+                                    <span>开始中心对比 (0)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="tag-blue px-2 py-1 rounded text-xs flex items-center space-x-1">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span>匹配度 > 85%</span>
+                                </span>
+                                <span class="tag-green px-2 py-1 rounded text-xs flex items-center space-x-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                    <span>风险管控中</span>
+                                </span>
+                                <span class="text-sm text-gray-500">共找到 4 个符合条件的中心</span>
+                            </div>
+                            <button class="flex items-center space-x-1 px-3 py-1.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                </svg>
+                                <span>手动添加机构</span>
+                            </button>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600 w-10">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">机构名称</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">所属地区</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">主要研究者</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">预计月入组</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">入组总数</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-4 py-4 font-medium text-gray-900">复旦大学附属肿瘤医院</td>
+                                        <td class="px-4 py-4 text-gray-600">华东</td>
+                                        <td class="px-4 py-4 text-gray-600">陈XX</td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                                <span class="text-gray-700">4.5 人/月</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-green-500 rounded-full" style="width: 96%"></div>
+                                                </div>
+                                                <span class="text-gray-600">96</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <button class="text-blue-600 hover:text-blue-700 text-sm">画像</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-4 py-4 font-medium text-gray-900">中山大学肿瘤防治中心</td>
+                                        <td class="px-4 py-4 text-gray-600">华南</td>
+                                        <td class="px-4 py-4 text-gray-600">周XX</td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                                <span class="text-gray-700">3.8 人/月</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-green-500 rounded-full" style="width: 92%"></div>
+                                                </div>
+                                                <span class="text-gray-600">92</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <button class="text-blue-600 hover:text-blue-700 text-sm">画像</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-4 py-4 font-medium text-gray-900">北京肿瘤医院</td>
+                                        <td class="px-4 py-4 text-gray-600">华北</td>
+                                        <td class="px-4 py-4 text-gray-600">张XX</td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                                <span class="text-gray-700">3.5 人/月</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-blue-500 rounded-full" style="width: 88%"></div>
+                                                </div>
+                                                <span class="text-gray-600">88</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <button class="text-blue-600 hover:text-blue-700 text-sm">画像</button>
+                                                <span class="tag-orange px-2 py-0.5 rounded text-xs flex items-center space-x-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                                    </svg>
+                                                    <span>关注</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-4">
+                                            <input type="checkbox" class="rounded border-gray-300">
+                                        </td>
+                                        <td class="px-4 py-4 font-medium text-gray-900">浙江省肿瘤医院</td>
+                                        <td class="px-4 py-4 text-gray-600">华东</td>
+                                        <td class="px-4 py-4 text-gray-600">王XX</td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                                <span class="text-gray-700">3.8 人/月</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-blue-500 rounded-full" style="width: 90%"></div>
+                                                </div>
+                                                <span class="text-gray-600">90</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <button class="text-blue-600 hover:text-blue-700 text-sm">画像</button>
+                                                <span class="tag-orange px-2 py-0.5 rounded text-xs flex items-center space-x-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                                    </svg>
+                                                    <span>关注</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Cards -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Regional Coverage Analysis -->
+                        <div class="glass-card p-5">
+                            <h3 class="font-semibold text-gray-800 text-base mb-4">区域覆盖分析</h3>
+                            <div class="flex items-center">
+                                <div class="w-1/3 text-center">
+                                    <div class="text-4xl font-bold text-blue-600">50%</div>
+                                    <div class="text-sm text-gray-500 mt-1">核心覆盖 (华东)</div>
+                                </div>
+                                <div class="w-2/3 space-y-3 pl-4 border-l border-gray-100">
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-gray-600">华东 (2)</span>
+                                            <span class="text-gray-800 font-medium">50%</span>
+                                        </div>
+                                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-500 rounded-full" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-gray-600">华南 (1)</span>
+                                            <span class="text-gray-800 font-medium">25%</span>
+                                        </div>
+                                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-500 rounded-full" style="width: 25%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-gray-600">华北 (1)</span>
+                                            <span class="text-gray-800 font-medium">25%</span>
+                                        </div>
+                                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-500 rounded-full" style="width: 25%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enrollment Acceleration Forecast -->
+                        <div class="glass-card p-5">
+                            <h3 class="font-semibold text-gray-800 text-base mb-4">入组加速预测</h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">预计相比历史提升</p>
+                                    <div class="flex items-baseline space-x-2">
+                                        <span class="text-4xl font-bold text-green-500">+22%</span>
+                                        <span class="text-gray-600">效率</span>
+                                    </div>
+                                </div>
+                                <div class="w-16 h-16">
+                                    <svg viewBox="0 0 64 64" class="w-full h-full">
+                                        <rect x="8" y="32" width="8" height="24" fill="#52c41a" rx="1"/>
+                                        <rect x="20" y="24" width="8" height="32" fill="#52c41a" rx="1"/>
+                                        <rect x="32" y="16" width="8" height="40" fill="#52c41a" rx="1"/>
+                                        <rect x="44" y="8" width="8" height="48" fill="#52c41a" rx="1"/>
+                                        <polyline points="12,36 24,28 36,20 48,12" fill="none" stroke="#52c41a" stroke-width="2"/>
+                                        <polygon points="48,12 44,14 46,18" fill="#52c41a"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -46,7 +46,7 @@ const Home = () => {
     return (
         <div className="animate-fade-in">
             <div style={{ marginBottom: 24 }}>
-                <Title level={2}>{t('goodAfternoon')}, Eric 👋</Title>
+                <Title level={2}>{t('goodAfternoon')}, Alice 👋</Title>
                 <Text type="secondary">{t('welcomeMessage')}</Text>
             </div>
 
