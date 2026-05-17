@@ -168,35 +168,56 @@ function buildExecutionDetailText(sections: { title: string; items: string[] }[]
 }
 
 // --- PD-1 华东 flow script constants ---
-const PD1_FLOW_THINKING_ZH = `识别任务类型：中心选择
+const PD1_FLOW_THINKING: Record<'zh' | 'en', string> = {
+    zh: `识别任务类型：中心选择
 提取关键参数：
   · 项目编号：TRIAL-2026-001
   · 目标入组：120人
   · 目标区域：华东
 判断：需要读取 Trial 本体获取完整方案参数
-判断：TRIAL_MASTER 包含 L3 级字段 → 触发权限前置校验`
+判断：TRIAL_MASTER 包含 L3 级字段 → 触发权限前置校验`,
+    en: `Task type identified: site selection
+Extract key parameters:
+  · Project ID: TRIAL-2026-001
+  · Target enrollment: 120 patients
+  · Target region: East China
+Decision: read the Trial ontology to fetch full protocol parameters
+Decision: TRIAL_MASTER contains L3 fields → trigger permission pre-check`
+}
 
-const PD1_FLOW_SECURITY_ZH = `调用工具：权限校验 (check_access_permission)
+const PD1_FLOW_SECURITY: Record<'zh' | 'en', string> = {
+    zh: `调用工具：权限校验 (check_access_permission)
   · 目标数据：TRIAL_MASTER（Trial 本体实例）
   · 检测级别：L3（含适应症、入排标准、目标入组数等加密字段）
-  · 依据：《数据分级分类方案》FR-6`
+  · 依据：《数据分级分类方案》FR-6`,
+    en: `Tool call: check_access_permission
+  · Target data: TRIAL_MASTER (Trial ontology instance)
+  · Inspection level: L3 (encrypted fields incl. indication, inclusion/exclusion criteria, target enrollment)
+  · Policy: Data Classification & Grading Policy FR-6`
+}
 
-const PD1_FLOW_AUTH_RESULT_ZH = `· 角色核验：CRA ✔ 具备 L3 读取权限（RBAC规则匹配）
+const PD1_FLOW_AUTH_RESULT: Record<'zh' | 'en', string> = {
+    zh: `· 角色核验：CRA ✔ 具备 L3 读取权限（RBAC规则匹配）
 · 审计日志：#AUD-20260325-0051 已写入
-✅ 授权通过，继续执行`
+✅ 授权通过，继续执行`,
+    en: `· Role verification: CRA ✔ has L3 read permission (RBAC rule matched)
+· Audit log: #AUD-20260325-0051 written
+✅ Authorization granted, continuing execution`
+}
 
 const AuthorizationCard: React.FC<AuthorizationCardProps> = ({ authState, onGrant, onDeny }) => {
+    const { t } = useLanguage()
     const isPending = authState === 'pending'
     return (
         <div style={{ border: '1px solid #ffd591', borderRadius: 8, background: '#fffbe6', padding: '12px 14px', marginTop: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <SecurityScanOutlined style={{ color: '#fa8c16', fontSize: 14 }} />
-                <Text style={{ color: '#fa8c16', fontWeight: 600, fontSize: 13 }}>授权请求</Text>
+                <Text style={{ color: '#fa8c16', fontWeight: 600, fontSize: 13 }}>{t('authRequestTitle')}</Text>
             </div>
             <Text style={{ color: '#595959', fontSize: 13, lineHeight: 1.8, display: 'block', marginBottom: 12 }}>
-                本次查询涉及「TRIAL-2026-001 试验主数据（TRIAL_MASTER）」中的 L3 级加密字段，包含适应症、入排标准、目标入组数等敏感信息。
+                {t('authRequestDescLine1')}
                 <br />
-                依据《数据分级分类方案》安全策略（FR-6），请确认是否授权本次访问。
+                {t('authRequestDescLine2')}
             </Text>
             <Space>
                 <Button
@@ -206,7 +227,7 @@ const AuthorizationCard: React.FC<AuthorizationCardProps> = ({ authState, onGran
                     disabled={!isPending}
                     onClick={onGrant}
                 >
-                    {authState === 'granted' ? '✔ 已授权' : '✔ 授权访问'}
+                    {authState === 'granted' ? t('authGrantedBtn') : t('authGrantBtn')}
                 </Button>
                 <Button
                     size="small"
@@ -214,7 +235,7 @@ const AuthorizationCard: React.FC<AuthorizationCardProps> = ({ authState, onGran
                     disabled={!isPending}
                     onClick={onDeny}
                 >
-                    {authState === 'denied' ? '✕ 已拒绝' : '✕ 拒绝'}
+                    {authState === 'denied' ? t('authDeniedBtn') : t('authDenyBtn')}
                 </Button>
             </Space>
         </div>
@@ -480,14 +501,14 @@ const IntelligentSelection: React.FC = () => {
 
     const handleAuthGrant = () => {
         setAuthState('granted')
-        afterAuthTimersRef.current.forEach((t) => window.clearTimeout(t))
+        afterAuthTimersRef.current.forEach((timer) => window.clearTimeout(timer))
 
         const authResultTimer = window.setTimeout(() => {
             setMessages((prev) => [...prev, {
                 role: 'assistant' as const,
                 type: 'auth_result' as const,
-                content: '授权验证结果',
-                details: PD1_FLOW_AUTH_RESULT_ZH
+                content: t('authResultTitle'),
+                details: PD1_FLOW_AUTH_RESULT[language]
             }])
         }, 500)
 
@@ -495,8 +516,8 @@ const IntelligentSelection: React.FC = () => {
             setMessages((prev) => [...prev, {
                 role: 'assistant' as const,
                 type: 'execution' as const,
-                content: '调用工具：Trial 本体调用',
-                details: buildExecutionDetailText(EXECUTION_SECTIONS['zh'])
+                content: t('trialOntologyCallTitle'),
+                details: buildExecutionDetailText(EXECUTION_SECTIONS[language])
             }])
         }, 1900)
 
@@ -504,7 +525,7 @@ const IntelligentSelection: React.FC = () => {
             setMessages((prev) => [...prev, {
                 role: 'assistant' as const,
                 type: 'result' as const,
-                content: buildRecommendationReply('pd-1 华东', 'zh', mockRecommendations.length)
+                content: buildRecommendationReply('pd-1 华东', language, mockRecommendations.length)
             }])
         }, 3600)
 
@@ -523,7 +544,7 @@ const IntelligentSelection: React.FC = () => {
         setMessages((prev) => [...prev, {
             role: 'assistant' as const,
             type: 'result' as const,
-            content: '访问已被拒绝，操作终止。如需继续，请重新发送请求并授权访问。'
+            content: t('accessDeniedMessage')
         }])
         setIsResponding(false)
     }
@@ -545,14 +566,14 @@ const IntelligentSelection: React.FC = () => {
         const isPd1EastChina = normalizedInput.includes('pd-1')
             && (trimmedInput.includes('华东') || normalizedInput.includes('east china'))
 
-        if (isPd1EastChina && language === 'zh') {
+        if (isPd1EastChina) {
             // New 5-step PD-1 flow with auth
             const thinkingTimer = window.setTimeout(() => {
                 setMessages((prev) => [...prev, {
                     role: 'assistant' as const,
                     type: 'thinking' as const,
-                    content: '思考中...',
-                    details: PD1_FLOW_THINKING_ZH
+                    content: t('thinkingStatus'),
+                    details: PD1_FLOW_THINKING[language]
                 }])
             }, 400)
 
@@ -560,8 +581,8 @@ const IntelligentSelection: React.FC = () => {
                 setMessages((prev) => [...prev, {
                     role: 'assistant' as const,
                     type: 'security_check' as const,
-                    content: '安全前置校验',
-                    details: PD1_FLOW_SECURITY_ZH
+                    content: t('securityPreCheckTitle'),
+                    details: PD1_FLOW_SECURITY[language]
                 }])
             }, 1800)
 
